@@ -48,13 +48,18 @@ void split(string &s, string& delim, vector< string > *ret){
 	}
 }
 
-string& cut(string &s,char flag = ':'){
+string cut(string s,char flag = ':'){
 	if (s.empty()){
 		return s;
 	}
 
 	s.erase(0, s.find_first_of(flag));
 	return trim(s);
+}
+
+string& comment(string &s){
+    s.erase(s.find_first_of('/'));
+    return s;
 }
 
 string int2str(int num){
@@ -132,7 +137,7 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			case 8:instruct = ((opt-5) << 26);
 				for (unsigned int i = 0; i < content.size(); i++){
 					string tmp = trim(content[i]);
-					if (content[i].find(ret[2]) != content[i].npos)instruct += ((lineNum+(cut(tmp)=="")) << 2);
+					if (content[i].find(ret[2]) != content[i].npos)instruct += (lineNum << 2);
 					if (cut(tmp) != ""){
 						lineNum++;
 					}
@@ -149,6 +154,8 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			cerr << "Error Register: Line" << index << "No such Register \"" << s << "\"" << endl;
 			exit(1);
 		}
+        char opcode[8];
+        sprintf_s(opcode,"%08X",instruct);
 		output << endl;
 	}
 	return 0;
@@ -187,6 +194,8 @@ int main(int argc, char const *argv[]){
 			vector < string > content;
 			int line = 0;
 			for (string tmp; getline(sourceFile, tmp);){
+                trim(tmp);
+                comment(tmp);
 				if (tmp != ""){
 					content.push_back(tmp);
 				}
