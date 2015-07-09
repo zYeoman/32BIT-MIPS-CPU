@@ -122,7 +122,7 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 				break;
 			//addi beq
 			case 2:
-			case 6:instruct = ((opt + 2) << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + (atoi(ret[3].c_str()));
+			case 6:instruct = ((opt + 2) << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + (atoi(ret[3].c_str()))^0x0000FFFF;
 				break;
 			//lw sw
 			case 3:
@@ -132,7 +132,7 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			case 8:instruct = ((opt-5) << 26);
 				for (unsigned int i = 0; i < content.size(); i++){
 					string tmp = trim(content[i]);
-					if (content[i].find(ret[2]) != content[i].npos)instruct += lineNum << 2;
+					if (content[i].find(ret[2]) != content[i].npos)instruct += ((lineNum+(cut(tmp)=="")) << 2);
 					if (cut(tmp) != ""){
 						lineNum++;
 					}
