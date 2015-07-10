@@ -58,7 +58,7 @@ string cut(string s,char flag = ':'){
 }
 
 string& comment(string &s){
-    s.erase(s.find_first_of('/'));
+    s.erase(s.find_first_of('#'));
     return s;
 }
 
@@ -194,8 +194,8 @@ int main(int argc, char const *argv[]){
 			vector < string > content;
 			int line = 0;
 			for (string tmp; getline(sourceFile, tmp);){
-                trim(tmp);
                 comment(tmp);
+                trim(tmp);
 				if (tmp != ""){
 					content.push_back(tmp);
 				}
