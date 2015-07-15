@@ -14,8 +14,8 @@ Release : 7/10/2015
 
 using namespace std;
 
-void showHelp(){
-    cout<<"Usage: Compiler [Source] [Output]"<<endl;
+void showHelp(char const *argv[]){
+    cout<<"Usage: "<<argv[0]<<" [Source] [Output]"<<endl;
     cout<<"Options:"<<endl;
     cout<<"    -h,--help     :  Show this help"<<endl;
     cout<<"    -v,--version  :  Show Version"<<endl;
@@ -43,28 +43,27 @@ void split(string &s, string& delim, vector< string > *ret){
 			index = s.find_first_of(delim, last);
 		}
 	}
-	if (index - last>0){
-		ret->push_back(s.substr(last, index - last));
-	}
+	ret->push_back(s.substr(last));
 }
 
-string cut(string s,char flag = ':'){
+string& cut(string &s,char flag = ':'){
 	if (s.empty()){
 		return s;
 	}
 
-	s.erase(0, s.find_first_of(flag));
-	return trim(s);
+	s.erase(0, s.find_first_of(flag) + 1);
+	return s;
 }
 
 string& comment(string &s){
-    s.erase(s.find_first_of('#'));
+	if (s.find_first_of('#')!=s.npos)
+		s.erase(s.begin() + s.find_first_of('#'), s.end());
     return s;
 }
 
 string int2str(int num){
-	char tmp[8];
-	sprintf_s(tmp, "%08X", num*4);
+	char tmp[9];
+	sprintf_s(tmp, "%08X", num);
 	return string(tmp);
 }
 
@@ -104,8 +103,11 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		return 1;
 	}
 	else{
-		string thisLine = trim(cut(content[index], ':'));
-		if (thisLine==""){
+		string thisLine = content[index];
+		cut(thisLine);
+		comment(thisLine);
+		trim(thisLine);
+		if (thisLine == ""){
 			return 2;
 		}
 		int instruct;
@@ -113,7 +115,8 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		split(thisLine, (string)" ,()", &ret);
 		output << int2str(line * 4) << ' ';
 		opt = str2int(ret[0]);
-		if (ret.size() != (unsigned int)opt <= 6 ? 4 : 2){
+		int opn = (unsigned int)opt <= 6 ? 4 : 2;
+		if (ret.size() != opn){
 			cerr << "Error Instruction: Line " << index << " incorrect num of register" << endl;
 			exit(2);
 		}
@@ -154,8 +157,9 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			cerr << "Error Register: Line" << index << "No such Register \"" << s << "\"" << endl;
 			exit(1);
 		}
-        char opcode[8];
+        char opcode[9];
         sprintf_s(opcode,"%08X",instruct);
+		output << opcode;
 		output << endl;
 	}
 	return 0;
@@ -163,12 +167,12 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 
 int main(int argc, char const *argv[]){
     if (argc==1){
-        showHelp();
+        showHelp(argv);
     }
     else if(argc==2){
         string options=argv[1];
         if (options=="-h"||options=="--help"){
-            showHelp();
+            showHelp(argv);
         }
         else if(options=="-v"||options=="--version"){
             cout<<"Copyright (C) Yeoman Zhuang. All rights reserved."<<endl;
@@ -179,9 +183,11 @@ int main(int argc, char const *argv[]){
     else if(argc>3){
         cerr<<"Error: Too many argument"<<endl;
     }
-    else{
-        ifstream sourceFile(argv[0]);
-        ofstream outputFile(argv[1]);
+    /*else*/{
+		//ifstream sourceFile(argv[1]);
+		ifstream sourceFile("D:\\Code\\CPU\\gcd.asm");
+		ofstream outputFile("D:\\Code\\CPU\\gcd.hex");
+		//ofstream outputFile(argv[2]);
         if (!sourceFile){
             cerr<<"Error: Can not open source file "<<argv[0]<<endl;
             return 1;
@@ -194,16 +200,13 @@ int main(int argc, char const *argv[]){
 			vector < string > content;
 			int line = 0;
 			for (string tmp; getline(sourceFile, tmp);){
-                comment(tmp);
-                trim(tmp);
-				if (tmp != ""){
-					content.push_back(tmp);
-				}
+				content.push_back(tmp);
 			}
 			for (unsigned int i = 0; i < content.size(); i++){
-				if (trans(outputFile, content, i, line))line++;
+				if (!trans(outputFile, content, i, line))line++;
 			}
         }
     }
+	system("pause");
     return 0;
 }
