@@ -5,12 +5,32 @@ Description : Trans MIPS to HEX
 Release : 7/18/2015
 */
 
+/*
+ChangeLog
+1.1.0:
+    split():不会再自动增加最后的空字符串了
+    增加and,andi,sll,srl,支持
+    beq支持前溯了
+1.0.0:
+    基本功能实现，基本无bug
+    实现了add,sub,lw,sw,slt,addi,beq,j,jr,jal
+0.9.0:
+    不能按照标号寻找
+    基本功能实现，bug尚存
+*/
+
+/*
+TODO:
+1.1.1:
+    lui,ori 支持
+*/
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
-#define VERSION "1.0.0"
+#define VERSION "1.1.0"
 
 using namespace std;
 
@@ -43,7 +63,8 @@ void split(string &s, string& delim, vector< string > *ret){
 			index = s.find_first_of(delim, last);
 		}
 	}
-	ret->push_back(s.substr(last));
+    if(s.substr(last)!="")
+	   ret->push_back(s.substr(last));
 }
 
 string& cut(string &s,char flag = ':'){
@@ -75,7 +96,7 @@ char str2int(string &s){
 		if (s == "$at")return 1;
 		if (s[1] == 'v')return 2 + tmp;
 		if (s[1] == 'a')return 4 + tmp;
-		if (s[1] == 't')return tmp >= 8 ? 24 : 8 + tmp;
+		if (s[1] == 't')return tmp >= 8 ? 24 : (8 + tmp);
 		if (s[1] == 's')return 16 + tmp;
 		if (s[1] == 'k')return 26 + tmp;
 		if (s == "$gp")return 28;
@@ -84,17 +105,49 @@ char str2int(string &s){
 		if (s == "$ra")return 31;
 		throw s;
 	}
-	if (s == "add")return 0;	//R,20
-	if (s == "sub")return 1;	//R,22
-	if (s == "beq")return 2;	//I,4
-	if (s == "lw")return 3;		//I,23
-	if (s == "sw")return 4;		//I,2b
-	if (s == "slt")return 5;	//R,2a
-	if (s == "addi")return 6;	//I,8
-	if (s == "j")return 7;		//j,2
-	if (s == "jal")return 8;	//j,3
-	if (s == "jr")return 9;		//R,08
-	return 15;
+	if (s == "add")return 0;	   //R,20
+	if (s == "sub")return 1;	   //R,22
+    if (s == "and")return 2;       //R,24
+	if (s == "lw")return 3;		   //I,23
+	if (s == "sw")return 4;		   //I,2b
+	if (s == "slt")return 5;	   //R,2a
+	if (s == "addi")return 6;	   //I,8
+    if (s == "sll")return 7;       //R,00
+    if (s == "srl")return 8;       //R,02
+    if (s == "beq")return 9;       //I,4
+    if (s == "andi")return 10;      //I,c
+	if (s == "j")return 29;         //J,2
+	if (s == "jal")return 30;      //J,3
+	if (s == "jr")return 31;       //R,08
+	return 32;
+}
+
+int find(vector<string>&content,string target,unsigned int start=0){
+    int lineNum = 0;
+    for (unsigned int i = start; i < content.size(); i++){
+        string tmp = content[i];
+        trim(tmp);
+        comment(tmp);
+        if (tmp.find(target) != tmp.npos){
+            return lineNum;
+        }
+        if (cut(tmp) != ""){
+            lineNum++;
+        }
+    }
+    lineNum = 0;
+    for (unsigned int i = start; i >= 0; i--){
+        string tmp = content[i];
+        trim(tmp);
+        comment(tmp);
+        if (tmp.find(target) != tmp.npos){
+            return lineNum;
+        }
+        if (cut(tmp) != ""){
+            lineNum--;
+        }
+    }
+    return 0;
 }
 
 int trans(ofstream &output, vector<string>&content, int index, int line){
@@ -115,59 +168,54 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		split(thisLine, (string)" ,()", &ret);
 		output << int2str(line * 4) << ' ';
 		opt = str2int(ret[0]);
-		int opn = (unsigned int)opt <= 6 ? 4 : 2;
+		int opn = (unsigned int)opt < 29 ? 4 : 2;
 		if (ret.size() != opn){
 			cerr << "Error Instruction: Line " << index << " incorrect num of register" << endl;
+            cerr << thisLine << "  " << ret.size() << endl;
 			exit(2);
 		}
 		unsigned int lineNum = 0;
 		try{
 			switch (opt){
-				//add sub slt
+			//add sub and slt
 			case 0:
 			case 1:
+            case 2:
 			case 5:instruct = 0x20 + opt * 2 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 21) + (str2int(ret[3]) << 16);
 				break;
-			//addi beq
-			case 2:instruct = (4 << 26) + (str2int(ret[1]) << 21) + (str2int(ret[2]) << 16);
+			//lw sw
+			case 3:instruct = (0x23 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (atoi(ret[2].c_str()));
+                break;
+			case 4:instruct = (0x2B << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (atoi(ret[2].c_str()));
+				break;
+            //addi
+            case 6:instruct = (8 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+                break;
+            //sll
+			case 7:instruct = (str2int(ret[1]) << 11) + (str2int(ret[2]) << 16) + (atoi(ret[3].c_str()) << 6);
+                break;
+            //srl
+			case 8:instruct = 0x02 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 16) + (atoi(ret[3].c_str()) << 6);
+                break;
+            //beq
+            case 9:instruct = (4 << 26) + (str2int(ret[1]) << 21) + (str2int(ret[2]) << 16);
                 if(atoi(ret[3].c_str())!=0)instruct += ((atoi(ret[3].c_str()))&0x0000FFFF);
                 else {
-                    for (unsigned int i = index; i < content.size(); i++){
-                    string tmp = content[i];
-                    trim(tmp);
-                    comment(tmp);
-                    if (tmp.find(ret[3]+':') != tmp.npos){
-                        instruct += (lineNum - 1);
-                        break;
-                    }
-                    if (cut(tmp) != ""){
-                        lineNum++;
-                    }
-                }
+                    int tmp = find(content,ret[3] + ":",index);
+                    tmp -= tmp > 0;
+                    instruct += (tmp)&0x0000FFFF;
                 }
                 break;
-			case 6:instruct = (8 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
-				break;
-			//lw sw
-			case 3:
-			case 4:instruct = ((0x23 + opt == 4 ? 8 : 0) << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (atoi(ret[2].c_str()));
-				break;
-			case 7:
-			case 8:instruct = ((opt-5) << 26);
-				for (unsigned int i = 0; i < content.size(); i++){
-					string tmp = content[i];
-                    trim(tmp);
-                    comment(tmp);
-					if (tmp.find(ret[1]+':') != tmp.npos){
-                        instruct += (lineNum);
-                        break;
-                    }
-					if (cut(tmp) != ""){
-						lineNum++;
-					}
-				}
-				break;
-			case 9:instruct = (str2int(ret[1]) << 21) + 0x08; break;
+            //andi
+            case 10:instruct = (0x0C << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+                break;
+			case 29:instruct = (2 << 26);
+                instruct += find(content,ret[1]+":");
+                break;
+            case 30:instruct = (3 << 26);
+                instruct += find(content,ret[1]+":");
+                break;
+            case 31:instruct = (str2int(ret[1]) << 21) + 0x08; break;
 			default:
 				cerr << "Error Instruction: Line " << index << "No such Instruction \"" << ret[0] << "\"" << endl;
 				exit(0);
@@ -176,6 +224,7 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		}
 		catch (string s){
 			cerr << "Error Register: Line" << index << "No such Register \"" << s << "\"" << endl;
+            cerr << thisLine << endl;
 			exit(1);
 		}
         char opcode[9];

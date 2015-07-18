@@ -18,13 +18,15 @@ int DATA[16];//数码管译码
 
 void main(){
     TCON = 0x00000000;
-    TH = 0x0000FFFF;
+    TH = 0xFFFFF000;
     TL = 0xFFFFFFFF;
-    $t7 = 0x00010000;
+    $t7 = 0x10;
     UART_CON = 0x00000000;//?可以么？
     while(1){
-        while(UART_CON^3==0)$t1=UART_RXD&0x000000FF;
-        while(UART_CON^3==0)$t1=UART_RXD&0x000000FF;
+        while(UART_CON^3==0);
+        $t1=UART_RXD&0x000000FF;
+        while(UART_CON^3==0);
+        $t2=UART_RXD&0x000000FF;
         while($t1!=$t2){
             if($t1>$t2)
                 $t1-=$t2;
@@ -39,7 +41,7 @@ void main(){
 
 void time() interrupt 1 //Timer
 {
-    TCON &= 0xfffffff9;//关闭定时器中断
+    TCON &= 0xFFFFFFF9;//关闭定时器中断
     //翻译
     BCD=DATA[$t1&0x0000000F]+$t7;
     $t7 = $t7<<1;
