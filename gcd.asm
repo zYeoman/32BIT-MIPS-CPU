@@ -1,10 +1,10 @@
 # a = $t1,b = $t2,return $t3
-    addi $t1,100
-    addi $t2,48
+    addi $t1,$zero,24
+    addi $t2,$zero,60
 main:
-    beq $t1,$t2,end
+    beq $t1,$t2,7
     slt $t6,$t1,$t2
-    beq $t6,$zero,high
+    beq $t6,$zero,1
     j low
 high:
     sub $t1,$t1,$t2

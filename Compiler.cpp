@@ -2,7 +2,7 @@
 Filename : Compiler.cpp
 Compiler : Visual Studio 2013
 Description : Trans MIPS to HEX
-Release : 7/10/2015
+Release : 7/18/2015
 */
 
 #include <iostream>
@@ -10,7 +10,7 @@ Release : 7/10/2015
 #include <string>
 #include <vector>
 
-#define VERSION 0.9
+#define VERSION "0.9.9"
 
 using namespace std;
 
@@ -129,8 +129,9 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			case 5:instruct = 0x20 + opt * 2 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 21) + (str2int(ret[3]) << 16);
 				break;
 			//addi beq
-			case 2:
-			case 6:instruct = ((opt + 2) << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + (atoi(ret[3].c_str()))^0x0000FFFF;
+			case 2:instruct = (4 << 26) + (str2int(ret[1]) << 21) + (str2int(ret[2]) << 16) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+                break;
+			case 6:instruct = (8 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
 				break;
 			//lw sw
 			case 3:
@@ -139,8 +140,13 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			case 7:
 			case 8:instruct = ((opt-5) << 26);
 				for (unsigned int i = 0; i < content.size(); i++){
-					string tmp = trim(content[i]);
-					if (content[i].find(ret[2]) != content[i].npos)instruct += (lineNum << 2);
+					string tmp = content[i];
+                    trim(tmp);
+                    comment(tmp);
+					if (tmp.find(ret[1]+':') != tmp.npos){
+                        instruct += (lineNum);
+                        break;
+                    }
 					if (cut(tmp) != ""){
 						lineNum++;
 					}
@@ -207,6 +213,5 @@ int main(int argc, char const *argv[]){
 			}
         }
     }
-	system("pause");
     return 0;
 }
