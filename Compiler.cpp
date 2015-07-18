@@ -10,7 +10,7 @@ Release : 7/18/2015
 #include <string>
 #include <vector>
 
-#define VERSION "0.9.9"
+#define VERSION "1.0.0"
 
 using namespace std;
 
@@ -129,7 +129,22 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			case 5:instruct = 0x20 + opt * 2 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 21) + (str2int(ret[3]) << 16);
 				break;
 			//addi beq
-			case 2:instruct = (4 << 26) + (str2int(ret[1]) << 21) + (str2int(ret[2]) << 16) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+			case 2:instruct = (4 << 26) + (str2int(ret[1]) << 21) + (str2int(ret[2]) << 16);
+                if(atoi(ret[3].c_str())!=0)instruct += ((atoi(ret[3].c_str()))&0x0000FFFF);
+                else {
+                    for (unsigned int i = index; i < content.size(); i++){
+                    string tmp = content[i];
+                    trim(tmp);
+                    comment(tmp);
+                    if (tmp.find(ret[3]+':') != tmp.npos){
+                        instruct += (lineNum - 1);
+                        break;
+                    }
+                    if (cut(tmp) != ""){
+                        lineNum++;
+                    }
+                }
+                }
                 break;
 			case 6:instruct = (8 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
 				break;
@@ -189,17 +204,17 @@ int main(int argc, char const *argv[]){
     else if(argc>3){
         cerr<<"Error: Too many argument"<<endl;
     }
-    /*else*/{
-		//ifstream sourceFile(argv[1]);
-		ifstream sourceFile("D:\\Code\\CPU\\gcd.asm");
-		ofstream outputFile("D:\\Code\\CPU\\gcd.hex");
-		//ofstream outputFile(argv[2]);
+    else{
+		ifstream sourceFile(argv[1]);
+		// ifstream sourceFile("D:\\Code\\CPU\\gcd.asm");
+		// ofstream outputFile("D:\\Code\\CPU\\gcd.hex");
+		ofstream outputFile(argv[2]);
         if (!sourceFile){
-            cerr<<"Error: Can not open source file "<<argv[0]<<endl;
+            cerr<<"Error: Can not open source file "<<argv[1]<<endl;
             return 1;
         }
         else if (!outputFile){
-            cerr<<"Error: Can not create output file "<<argv[1]<<endl;
+            cerr<<"Error: Can not create output file "<<argv[2]<<endl;
             return 1;
         }
         else{
