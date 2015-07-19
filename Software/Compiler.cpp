@@ -5,32 +5,12 @@ Description : Trans MIPS to HEX
 Release : 7/18/2015
 */
 
-/*
-ChangeLog
-1.1.1:
-    lui,ori,or 支持
-1.1.0:
-    split():不会再自动增加最后的空字符串了
-    增加and,andi,sll,srl,支持
-    beq支持前溯了
-1.0.0:
-    基本功能实现，基本无bug
-    实现了add,sub,lw,sw,slt,addi,beq,j,jr,jal
-0.9.0:
-    不能按照标号寻找
-    基本功能实现，bug尚存
-*/
-
-/*
-TODO:
-*/
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
-#define VERSION "1.1.1"
+#define VERSION "1.1.2"
 
 using namespace std;
 
@@ -88,7 +68,35 @@ string int2str(int num){
 	return string(tmp);
 }
 
-char str2int(string &s){
+char char2int(char p){
+    switch (p){
+        case '0':return 0;
+        case '1':return 1;
+        case '2':return 2;
+        case '3':return 3;
+        case '4':return 4;
+        case '5':return 5;
+        case '6':return 6;
+        case '7':return 7;
+        case '8':return 8;
+        case '9':return 9;
+        case 'A':
+        case 'a':return 10;
+        case 'B':
+        case 'b':return 11;
+        case 'C':
+        case 'c':return 12;
+        case 'D':
+        case 'd':return 13;
+        case 'E':
+        case 'e':return 14;
+        case 'F':
+        case 'f':return 15;
+        default: return -1;
+    }
+}
+
+int str2int(string &s){
 	s = trim(s);
 	if (s[0] == '$'){
 		int tmp = s[2] - '0';
@@ -122,6 +130,40 @@ char str2int(string &s){
 	if (s == "j")return 29;         //J,2
 	if (s == "jal")return 30;      //J,3
 	if (s == "jr")return 31;       //R,08
+    if (s[0] == '0'){
+        int res = 0;
+        if(s[1] == 'x'||s[1] == 'X'){
+            for (int i = 2; i != s.length(); ++i){
+                char tmp = char2int(s[i]);
+                if(tmp < 0) throw (string)"Wrong Num";
+                else{
+                    res = res * 16 + tmp;
+                }
+            }
+            return res;
+        }
+        else{
+            for (int i = 1;i != s.length(); ++i){
+                if(s[i] == '1') res = res * 2 + 1;
+                else if(s[i] == '0') res = res * 2;
+                else throw (string)"Wrond Num";
+            }
+            return res;
+        }
+    }
+    else{
+        int res = 0;
+        char flag = (s[0] == '-');
+        for(int i = flag;i != s.length(); ++i){
+            char tmp = char2int(s[i]);
+                if(tmp < 0 || tmp > 9) throw (string)"Wrong Num";
+                else{
+                    res = res * 10 + tmp;
+                }
+        }
+        if(flag)res = -res;
+        return res;
+    }
 	return 32;
 }
 
@@ -174,10 +216,11 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		int opn = (unsigned int)opt < 29 ? 4 : 2;
         opn = (opt == 11 ? 3 : opn);
 		if (ret.size() != opn){
-			cerr << "Error Instruction: Line " << index << " incorrect num of register" << endl;
+			cerr << "Error Instruction: Line " << index + 1 << " incorrect num of register" << endl;
             cerr << thisLine << "  " << ret.size() << endl;
 			exit(2);
 		}
+        int tmp = 0;
 		unsigned int lineNum = 0;
 		try{
 			switch (opt){
@@ -188,36 +231,33 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 			case 5:instruct = 0x20 + opt * 2 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 21) + (str2int(ret[3]) << 16);
 				break;
 			//lw sw
-			case 3:instruct = (0x23 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (atoi(ret[2].c_str()));
+			case 3:instruct = (0x23 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (str2int(ret[2]));
                 break;
-			case 4:instruct = (0x2B << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (atoi(ret[2].c_str()));
+			case 4:instruct = (0x2B << 26) + (str2int(ret[1]) << 16) + (str2int(ret[3]) << 21) + (str2int(ret[2]));
 				break;
             //addi
-            case 6:instruct = (8 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+            case 6:instruct = (8 << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((str2int(ret[3]))&0x0000FFFF);
                 break;
             //sll
-			case 7:instruct = (str2int(ret[1]) << 11) + (str2int(ret[2]) << 16) + (atoi(ret[3].c_str()) << 6);
+			case 7:instruct = (str2int(ret[1]) << 11) + (str2int(ret[2]) << 16) + (str2int(ret[3]) << 6);
                 break;
             //srl
-			case 8:instruct = 0x02 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 16) + (atoi(ret[3].c_str()) << 6);
+			case 8:instruct = 0x02 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 16) + (str2int(ret[3]) << 6);
                 break;
             //beq
             case 9:instruct = (4 << 26) + (str2int(ret[1]) << 21) + (str2int(ret[2]) << 16);
-                if(atoi(ret[3].c_str())!=0)instruct += ((atoi(ret[3].c_str()))&0x0000FFFF);
-                else {
-                    int tmp = find(content,ret[3] + ":",index);
-                    tmp -= tmp > 0;
-                    instruct += (tmp)&0x0000FFFF;
-                }
+                tmp = find(content,ret[3] + ":",index);
+                tmp -= tmp > 0;
+                instruct += (tmp)&0x0000FFFF;
                 break;
             //andi
-            case 10:instruct = (0x0C << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+            case 10:instruct = (0x0C << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((str2int(ret[3]))&0x0000FFFF);
                 break;
             //lui
-            case 11:instruct = (0x0F << 26) + (str2int(ret[1]) << 16) + ((atoi(ret[2].c_str()))&0x0000FFFF);
+            case 11:instruct = (0x0F << 26) + (str2int(ret[1]) << 16) + ((str2int(ret[2]))&0x0000FFFF);
                 break;
             //ori
-            case 12:instruct = (0x0D << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+            case 12:instruct = (0x0D << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((str2int(ret[3]))&0x0000FFFF);
                 break;
             //or
             case 13:instruct = 0x25 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 21) + (str2int(ret[3]) << 16);
@@ -230,13 +270,13 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
                 break;
             case 31:instruct = (str2int(ret[1]) << 21) + 0x08; break;
 			default:
-				cerr << "Error Instruction: Line " << index << "No such Instruction \"" << ret[0] << "\"" << endl;
+				cerr << "Error Instruction: Line " << index + 1 << "No such Instruction \"" << ret[0] << "\"" << endl;
 				exit(0);
 				break;
 			}
 		}
 		catch (string s){
-			cerr << "Error Register: Line" << index << "No such Register \"" << s << "\"" << endl;
+			cerr << "Error Register: Line" << index + 1 << "No such Register \"" << s << "\"" << endl;
             cerr << thisLine << endl;
 			exit(1);
 		}
