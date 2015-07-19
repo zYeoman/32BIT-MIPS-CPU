@@ -7,6 +7,8 @@ Release : 7/18/2015
 
 /*
 ChangeLog
+1.1.1:
+    lui,ori,or 支持
 1.1.0:
     split():不会再自动增加最后的空字符串了
     增加and,andi,sll,srl,支持
@@ -21,8 +23,6 @@ ChangeLog
 
 /*
 TODO:
-1.1.1:
-    lui,ori 支持
 */
 
 #include <iostream>
@@ -30,7 +30,7 @@ TODO:
 #include <string>
 #include <vector>
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 
 using namespace std;
 
@@ -116,6 +116,9 @@ char str2int(string &s){
     if (s == "srl")return 8;       //R,02
     if (s == "beq")return 9;       //I,4
     if (s == "andi")return 10;      //I,c
+    if (s == "lui")return 11;       //I,f
+    if (s == "ori")return 12;       //I,d
+    if (s == "or")return 13;        //R,25
 	if (s == "j")return 29;         //J,2
 	if (s == "jal")return 30;      //J,3
 	if (s == "jr")return 31;       //R,08
@@ -169,6 +172,7 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		output << int2str(line * 4) << ' ';
 		opt = str2int(ret[0]);
 		int opn = (unsigned int)opt < 29 ? 4 : 2;
+        opn = (opt == 11 ? 3 : opn);
 		if (ret.size() != opn){
 			cerr << "Error Instruction: Line " << index << " incorrect num of register" << endl;
             cerr << thisLine << "  " << ret.size() << endl;
@@ -208,6 +212,15 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
                 break;
             //andi
             case 10:instruct = (0x0C << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+                break;
+            //lui
+            case 11:instruct = (0x0F << 26) + (str2int(ret[1]) << 16) + ((atoi(ret[2].c_str()))&0x0000FFFF);
+                break;
+            //ori
+            case 12:instruct = (0x0D << 26) + (str2int(ret[1]) << 16) + (str2int(ret[2]) << 21) + ((atoi(ret[3].c_str()))&0x0000FFFF);
+                break;
+            //or
+            case 13:instruct = 0x25 + (str2int(ret[1]) << 11) + (str2int(ret[2]) << 21) + (str2int(ret[3]) << 16);
                 break;
 			case 29:instruct = (2 << 26);
                 instruct += find(content,ret[1]+":");
