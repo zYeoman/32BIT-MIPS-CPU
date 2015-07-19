@@ -1,4 +1,4 @@
-module UART_TX(clk,TX,DATA,EN,STATUS,rst);
+module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
 
     input clk;              //系统时钟
     input rst;
@@ -6,6 +6,7 @@ module UART_TX(clk,TX,DATA,EN,STATUS,rst);
     input EN;               //使能信号
     output reg TX;          //发送数据
     output reg STATUS;      //TX状态，高时空闲
+    output reg END;         //TX发送完毕，有一个高电平脉冲
     //发送TX时启动波特率发生器
 
     wire clk_9600;         //发送时钟
@@ -22,6 +23,7 @@ module UART_TX(clk,TX,DATA,EN,STATUS,rst);
     begin
         TX<=1'b1;
         STATUS<=1;
+        END<=0;
         TX_num<=4'h0;
     end
 
@@ -45,6 +47,7 @@ module UART_TX(clk,TX,DATA,EN,STATUS,rst);
             // reset
             TX<=1'b1;
             TX_num<=0;
+            END<=1'b0;
         end
         else if (clk_9600&&(~STATUS)) begin
             TX_num<=TX_num+4'h1;
@@ -65,7 +68,9 @@ module UART_TX(clk,TX,DATA,EN,STATUS,rst);
         else if (TX_num==4'hA) begin
             TX_num<=4'h0;
             TX<=1'b1;
+            END<=1'b1;
         end
+        else END<=0;
     end
 endmodule
 
