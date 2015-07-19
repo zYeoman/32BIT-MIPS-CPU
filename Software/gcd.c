@@ -6,7 +6,7 @@ Release : 7/18/2015
 sfr TH 0x40000000
 sfr TL 0x40000004
 sfr TCON 0x40000008
-
+sfr leds 0x4000000C
 sfr UART_CON 0x40000020
 sfr UART_TXD 0x40000018
 sfr UART_RXD 0x4000001C
@@ -22,21 +22,20 @@ void main(){
     TL = 0xFFFFFFFF;
     $t7 = 0x10;
     UART_CON = 0x00000000;//?可以么？
-    while(1){
-        while(UART_CON^3==0);
-        $t1=UART_RXD&0x000000FF;
-        while(UART_CON^3==0);
-        $t2=UART_RXD&0x000000FF;
-        while($t1!=$t2){
-            if($t1>$t2)
-                $t1-=$t2;
-            else
-                $t2-=$t1;
-        }
-        TCON = 0x00000003;
-        UART_TXD = $t1;
-        while(UART_CON^2==0);
+    while(UART_CON^3==0);
+    $t1=UART_RXD&0x000000FF;
+    while(UART_CON^3==0);
+    $t2=UART_RXD&0x000000FF;
+    TCON = 0x00000003;
+    while($t1!=$t2){
+        if($t1>$t2)
+            $t1-=$t2;
+        else
+            $t2-=$t1;
     }
+    UART_TXD = $t1;
+    while(UART_CON^2==0);
+    leds = $t1;
 }
 
 void time() interrupt 1 //Timer

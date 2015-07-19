@@ -2,7 +2,7 @@
 Filename : Compiler.cpp
 Compiler : Visual Studio 2013
 Description : Trans MIPS to HEX
-Release : 7/18/2015
+Release : 7/19/2015
 */
 
 #include <iostream>

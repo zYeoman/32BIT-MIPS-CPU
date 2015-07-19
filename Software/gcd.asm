@@ -79,9 +79,12 @@ get2:
     lw $t2,28($s0)
 
 filter:
+    addi $t5,$zero,3
     andi $t1,$t1,255#0xFF
     andi $t2,$t2,255#0xFF
-
+    add $a0,$zero,$t1
+    add $a1,$zero,$t2
+    sw $t5,8($s0)
 main:
     beq $t1,$t2,end
     slt $t6,$t1,$t2
@@ -94,14 +97,13 @@ low:
     sub $t2,$t2,$t1
     j main
 end:
-    addi $t5,$zero,3
     sw $t1,24($s0)
-    sw $t5,8($s0)
 TX:
     lw $t6,32($s0)
     andi $t6,$t6,4
     beq $t6,$zero,TX
-    
+result:
+    sw $t1,12($s0)
 #中断处理部分
 INTERUPT:
     lw $t5,8($s0)
@@ -117,22 +119,22 @@ INTERUPT:
     addi $s6,$s6,-1
     beq $s6,$zero,bcd4
 bcd1:
-    and $t0,$t1,0xF
+    and $t0,$a0,0xF
     sll $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
 bcd2:
-    and $t0,$t1,0xF0
+    and $t0,$a0,0xF0
     srl $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
 bcd3:
-    and $t0,$t2,0xF
+    and $t0,$a1,0xF
     sll $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
 bcd4:
-    and $t0,$t2,0xF0
+    and $t0,$a1,0xF0
     srl $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
