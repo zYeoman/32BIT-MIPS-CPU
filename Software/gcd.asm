@@ -25,9 +25,8 @@ init:
     sw $zero,8($s0) #TCON = 0
     sw $t3,0($s0)   #TH=0xFFFFF000
     addi $t4,$zero,-1
-    addi $t0,$zero,1
     addi $s1,$zero,0#$s1=0
-    sll $s2,$t0,4   #$s2=0x10
+    addi $s2,$zero,256   #$s2=0x100
     sw $t4,4($s0)   #TL=0xFFFFFFFF
     sw $zero,32($s0)#UART_CON=0
 
