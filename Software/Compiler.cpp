@@ -2,6 +2,8 @@
 Filename : Compiler.cpp
 Compiler : Visual Studio 2013
 Description : Trans MIPS to HEX
+              Support add, sub, and, lw, sw, slt, addi, sll, srl, beq, andi, lui, ori, or, j, jal, jr
+Author : Yeoman Zhuang
 Release : 7/19/2015
 */
 

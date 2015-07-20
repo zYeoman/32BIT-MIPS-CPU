@@ -104,6 +104,7 @@ TX:
     beq $t6,$zero,TX
 result:
     sw $t1,12($s0)
+    j get1
 #中断处理部分
 INTERUPT:
     lw $t5,8($s0)

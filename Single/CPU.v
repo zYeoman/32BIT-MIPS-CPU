@@ -23,7 +23,7 @@ module CPU (
     wire [2:0] PCSrc;
     wire [1:0] RegDst,
         MemtoReg;
-    wire [3:0] ALUOp;
+    //wire [3:0] ALUOp;     //no use
     wire RegWrite, 
         ALUSrc1, 
         ALUSrc2, 
@@ -39,9 +39,9 @@ module CPU (
         rdata,
         DataBusA,
         DataBusB;
-    wire [31:0] ALU1,
-        ALU2,
-        Imm, 
+    wire [31:0] ALU1,       //0:DataBusA or 1:Shamt
+        ALU2,               //0:DataBusB or 1:Imm
+        Imm,                //0:ExtImm or 1:ZeroImm
         DataBusC;
     wire [31:0] ALUOut;
     wire [11:0] digi;
