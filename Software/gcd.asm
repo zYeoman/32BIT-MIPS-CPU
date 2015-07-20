@@ -151,8 +151,7 @@ endbcd:
     j exit
 reset:
     addi $s1,$zero,0
-    addi $t0,$zero,1
-    sll $s2,$t0,4
+    addi $s2,$zero,256
 exit:
     lw $t5,8($s0)
     ori $t5,$t5,2
