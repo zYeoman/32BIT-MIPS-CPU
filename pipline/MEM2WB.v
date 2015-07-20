@@ -37,16 +37,14 @@ module MEM2WB(
             AddrC_Out <= 0;
             MemtoReg_Out <= 0;
             rdata_Out <= 0;
-        end
-        else if (EN) begin
+        end else if (EN) begin
             RegWrite_Out <= RegWrite_In;
             PC_Out <= PC_In;
             ALUOut_Out <= ALUOut_In;
             AddrC_Out <= AddrC_In;
             MemtoReg_Out <= MemtoReg_In;
             rdata_Out <= rdata_In;
-        end
-        else begin
+        end else begin
             RegWrite_Out <= RegWrite_Out;
             PC_Out <= PC_Out;
             ALUOut_Out <= ALUOut_Out;

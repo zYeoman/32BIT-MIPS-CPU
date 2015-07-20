@@ -55,8 +55,7 @@ module ID2EX(
             PCSrc_Out <= 0;
             RegDst_Out <= 0;
             MemtoReg_Out <= 0;
-        end
-        else if (EN) begin
+        end else if (EN) begin
             AluSrc1_Out <= AluSrc1_In;
             AluSrc2_Out <= AluSrc2_In;
             RegWrite_Out <= RegWrite_In;
@@ -74,8 +73,7 @@ module ID2EX(
             PCSrc_Out <= PCSrc_In;
             RegDst_Out <= RegDst_In;
             MemtoReg_Out <= MemtoReg_In;
-        end
-        else begin
+        end else begin
             AluSrc1_Out <= AluSrc1_Out;
             AluSrc2_Out <= AluSrc2_Out;
             RegWrite_Out <= RegWrite_Out;

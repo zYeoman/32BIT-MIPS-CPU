@@ -22,12 +22,10 @@ module IF2ID(
             // reset
             PCOut<=initial;
             InstructionOut<=initial;
-        end
-        else if (EN) begin
+        end else if (EN) begin
             PCOut<=PCIn;
             InstructionOut<=InstructionIn;
-        end
-        else begin
+        end else begin
             PCOut<=PCOut;
             InstructionOut<=InstructionOut;
         end

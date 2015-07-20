@@ -43,8 +43,7 @@ module EX2MEM(
             AddrC_Out <= 0;
             PCSrc_Out <= 0;
             MemtoReg_Out <= 0;
-        end
-        else if (EN) begin
+        end else if (EN) begin
             RegWrite_Out <= RegWrite_In;
             MemWrite_Out <= MemWrite_In;
             MemRead_Out <= MemRead_In;
@@ -54,8 +53,7 @@ module EX2MEM(
             AddrC_Out <= AddrC_In;
             PCSrc_Out <= PCSrc_In;
             MemtoReg_Out <= MemtoReg_In;
-        end
-        else begin
+        end else begin
             RegWrite_Out <= RegWrite_Out;
             MemWrite_Out <= MemWrite_Out;
             MemRead_Out <= MemRead_Out;
