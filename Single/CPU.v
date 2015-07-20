@@ -1,7 +1,8 @@
 module CPU (
     input clk, rst_n, 
     input [7:0] switch, 
-    input rx, tx, 
+    input rx, 
+    output tx, 
     output [7:0] led, 
     output [6:0] digi_out1, 
     output [6:0] digi_out2, 
@@ -22,8 +23,9 @@ module CPU (
         Rs;
     wire [2:0] PCSrc;
     wire [1:0] RegDst,
-        MemtoReg;
-    //wire [3:0] ALUOp;     //no use
+        MemtoReg, 
+        nextPC;
+    wire [3:0] ALUOp;
     wire RegWrite, 
         ALUSrc1, 
         ALUSrc2, 
@@ -35,13 +37,13 @@ module CPU (
         Sign;
     wire [5:0] ALUFun;
     wire [4:0] AddrC;
-    wire [31:0] wdata,
-        rdata,
+    reg [31:0] wdata;
+    wire [31:0] rdata,
         DataBusA,
         DataBusB;
-    wire [31:0] ALU1,       //0:DataBusA or 1:Shamt
-        ALU2,               //0:DataBusB or 1:Imm
-        Imm,                //0:ExtImm or 1:ZeroImm
+    wire [31:0] ALU1,
+        ALU2,
+        Imm, 
         DataBusC;
     wire [31:0] ALUOut;
     wire [11:0] digi;
@@ -80,6 +82,7 @@ module CPU (
         .OpCode(Instruction[31:26]), 
         .Funct(Instruction[5:0]), 
         .PCSrc(PCSrc), 
+        .nextPC(nextPC), 
         .RegDst(RegDst), .MemtoReg(MemtoReg), 
         ///.ALUOp(ALUOp), 
         .ALUFun(ALUFun), 
@@ -92,10 +95,22 @@ module CPU (
         (RegDst==2'h2) ? 5'd31 : // Ra
         (RegDst==2'h3) ? 5'd26 : // Xp
         5'b0; // zero won't be write
-    assign wdata = (MemtoReg==2'h0) ? ALUOut : 
-        (MemtoReg==2'h1) ? rdata : 
-        (MemtoReg==2'h2) ? PC4 : 
-        32'b0;
+
+    always @ (*) begin
+        case (MemtoReg)
+            2'h0: wdata = ALUOut;
+            2'h1: wdata = rdata;
+            // 2'h2: case (nextPC)
+            //         2'h0: wdata = PC4;
+            //         2'h1: wdata = ALUOut[0] ? ConBA : PC4;
+            //         2'h2: wdata = {PC[31:28], JT, 2'b0};
+            //         2'h3: wdata = DataBusA;
+            //         default : wdata = 32'b0;
+            //    endcase
+            2'h2: wdata = PC;
+            default : wdata = 32'b0;
+        endcase
+    end
 
     Register register(
         .clk(clk), .rst(rst),

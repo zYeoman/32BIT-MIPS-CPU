@@ -1,9 +1,10 @@
 module DataMem (
     input clk, rst, 
     input MemWrite, MemRead, 
-    input rx, tx, 
+    input rx, 
     input [31:0] addr, wdata, 
     input [7:0] switch, 
+    output tx, 
     output reg [31:0] rdata, 
     output reg [7:0] led, 
     output reg [11:0] digi, 
@@ -52,22 +53,27 @@ module DataMem (
             TH <= 32'b0;
             TL <= 32'b0;
             TCON <= 3'b0; // all disable
-        end else if(TCON[0]) begin // TIM enable
-            if(TL==32'hffff_ffff) begin
-                TL <= TH;
-                TCON[2] <= TCON[1] ? 1'b1 : 1'b0;
-            end else
-                TL <= TL + 1'b1;
-        end else if(MemWrite) begin
-            case (addr)
-                32'h4000_0000: TH <= wdata;
-                32'h4000_0004: TL <= wdata;
-                32'h4000_0008: TCON <= wdata[2:0];
-                32'h4000_000C: led <= wdata[7:0];
-                32'h4000_0014: digi <= wdata[11:0];
-                default: if ( (addr[RAM_BIT+1:2]<RAM_SIZE) && ~addr[30] )
-                    DATA[ addr[RAM_BIT+1:2] ] <= wdata;
-            endcase
+            led <= 8'b0;
+            digi <= 12'b0;
+        end else begin
+            if(TCON[0]) begin // TIM enable
+                if(TL==32'hffff_ffff) begin
+                    TL <= TH;
+                    TCON[2] <= TCON[1] ? 1'b1 : 1'b0;
+                end else begin
+                    TL <= TL + 1'b1;
+                end
+            end
+            if(MemWrite)
+                case (addr)
+                    32'h4000_0000: TH <= wdata;
+                    32'h4000_0004: TL <= wdata;
+                    32'h4000_0008: TCON <= wdata[2:0];
+                    32'h4000_000C: led <= wdata[7:0];
+                    32'h4000_0014: digi <= wdata[11:0];
+                    default: if ( (addr[RAM_BIT+1:2]<RAM_SIZE) && ~addr[30] )
+                        DATA[ addr[RAM_BIT+1:2] ] <= wdata;
+                endcase
         end
     end
 
@@ -78,18 +84,20 @@ module DataMem (
         .DATA(rx_d),
         .STATUS(rx_s)
     );
-    UART_TX rarttx(
+    UART_TX uarttx(
         .clk(clk), .rst(rst), 
         .DATA(UART_TXD),
         .EN(enable), 
         .TX(tx), 
-        .STATUS(tx_s)
+        .STATUS(), 
+        .END(tx_s)
     );
     always @ (posedge clk or posedge rst) begin
         if(rst) begin
             UART_CON <= 2'b0;
             UART_TXD <= 8'b0;
             UART_RXD <= 8'b0;
+            enable <= 1'b0;
         end else begin
             if(MemWrite)
                 case (addr)
@@ -110,7 +118,7 @@ module DataMem (
                 UART_RXD <= rx_d;
                 UART_CON[1] <= 1'b1;
             end
-            if(~tx_s) begin
+            if(tx_s) begin
                 UART_CON[0] <= 1'b1;
                 enable <= 1'b0;
             end

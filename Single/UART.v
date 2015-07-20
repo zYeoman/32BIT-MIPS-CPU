@@ -32,12 +32,10 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
             // reset
             STATUS<=1;
             TX_DATA<=8'h00;
-        end
-        else if (EN) begin   //检测到EN信号
+        end else if (EN) begin   //检测到EN信号
             TX_DATA<=DATA;
             STATUS<=0;
-        end
-        else if (TX_num==4'hA) begin
+        end else if (TX_num==4'hA) begin
             STATUS<=1;
         end
     end
@@ -60,7 +58,10 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
                 4'h5: TX<=TX_DATA[4];
                 4'h6: TX<=TX_DATA[5];
                 4'h7: TX<=TX_DATA[6];
-                4'h8: TX<=TX_DATA[7];
+                4'h8: begin
+                    TX<=TX_DATA[7];
+                    END<=1'b1;
+                end
                 4'h9: TX<=1'b1;
                 default: ;
             endcase
@@ -68,7 +69,6 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
         else if (TX_num==4'hA) begin
             TX_num<=4'h0;
             TX<=1'b1;
-            END<=1'b1;
         end
         else END<=0;
     end
