@@ -119,22 +119,22 @@ INTERUPT:
     addi $s6,$s6,-1
     beq $s6,$zero,bcd4
 bcd1:
-    and $t0,$a0,0xF
+    andi $t0,$a0,0xF
     sll $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
 bcd2:
-    and $t0,$a0,0xF0
+    andi $t0,$a0,0xF0
     srl $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
 bcd3:
-    and $t0,$a1,0xF
+    andi $t0,$a1,0xF
     sll $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
 bcd4:
-    and $t0,$a1,0xF0
+    andi $t0,$a1,0xF0
     srl $t0,$t0,2
     add $s4,$t0,$s3
     j endbcd
