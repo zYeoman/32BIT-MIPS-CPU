@@ -2,7 +2,7 @@
 Filename : Compiler.cpp
 Compiler : Visual Studio 2013
 Description : Trans MIPS to HEX
-              Support add, sub, and, lw, sw, slt, addi, sll, srl, beq, andi, lui, ori, or, j, jal, jr
+              Support nop, add, sub, and, lw, sw, slt, addi, sll, srl, beq, andi, lui, ori, or, j, jal, jr
 Author : Yeoman Zhuang
 Release : 7/19/2015
 */
@@ -12,7 +12,7 @@ Release : 7/19/2015
 #include <string>
 #include <vector>
 
-#define VERSION "1.1.2"
+#define VERSION "1.2.0"
 
 using namespace std;
 
@@ -21,6 +21,7 @@ void showHelp(char const *argv[]){
     cout<<"Options:"<<endl;
     cout<<"    -h,--help     :  Show this help"<<endl;
     cout<<"    -v,--version  :  Show Version"<<endl;
+    cout<<"    -f,--format   :  Output Format,Default is \"%08X %08X\""<<endl;
 }
 
 string& trim(string &s){
@@ -62,12 +63,6 @@ string& comment(string &s){
 	if (s.find_first_of('#')!=s.npos)
 		s.erase(s.begin() + s.find_first_of('#'), s.end());
     return s;
-}
-
-string int2str(int num){
-	char tmp[9];
-	sprintf_s(tmp, "%08X", num);
-	return string(tmp);
 }
 
 char char2int(char p){
@@ -132,6 +127,7 @@ int str2int(string &s){
 	if (s == "j")return 29;         //J,2
 	if (s == "jal")return 30;      //J,3
 	if (s == "jr")return 31;       //R,08
+    if (s == "nop")return 32;
     if (s[0] == '0'){
         int res = 0;
         if(s[1] == 'x'||s[1] == 'X'){
@@ -166,7 +162,7 @@ int str2int(string &s){
         if(flag)res = -res;
         return res;
     }
-	return 32;
+	return 33;
 }
 
 int find(vector<string>&content,string target,unsigned int start=0){
@@ -197,7 +193,7 @@ int find(vector<string>&content,string target,unsigned int start=0){
     return 0;
 }
 
-int trans(ofstream &output, vector<string>&content, int index, int line){
+int trans(ofstream &output, vector<string>&content, int index, int line, string fmt = (string)"%08X %08X"){
 	vector<string> ret;
 	if (content[index]==""){
 		return 1;
@@ -213,10 +209,10 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
 		int instruct;
 		int opt;
 		split(thisLine, (string)" ,()", &ret);
-		output << int2str(line * 4) << ' ';
 		opt = str2int(ret[0]);
 		int opn = (unsigned int)opt < 29 ? 4 : 2;
         opn = (opt == 11 ? 3 : opn);
+        opn = (opt == 32 ? 1 : opn);
 		if (ret.size() != opn){
 			cerr << "Error Instruction: Line " << index + 1 << " incorrect num of register" << endl;
             cerr << thisLine << "  " << ret.size() << endl;
@@ -270,7 +266,10 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
             case 30:instruct = (3 << 26);
                 instruct += find(content,ret[1]+":");
                 break;
-            case 31:instruct = (str2int(ret[1]) << 21) + 0x08; break;
+            case 31:instruct = (str2int(ret[1]) << 21) + 0x08; 
+                break;
+            case 32:instruct = 0;
+                break;
 			default:
 				cerr << "Error Instruction: Line " << index + 1 << "No such Instruction \"" << ret[0] << "\"" << endl;
 				exit(0);
@@ -282,10 +281,10 @@ int trans(ofstream &output, vector<string>&content, int index, int line){
             cerr << thisLine << endl;
 			exit(1);
 		}
-        char opcode[9];
-        sprintf_s(opcode,"%08X",instruct);
-		output << opcode;
-		output << endl;
+        char opcode[100];
+        if(fmt.find("%d") == fmt.npos) line = line * 4;
+        sprintf(opcode,fmt.c_str(),line,instruct);
+		output << opcode << endl;
 	}
 	return 0;
 }
@@ -295,7 +294,7 @@ int main(int argc, char const *argv[]){
         showHelp(argv);
     }
     else if(argc==2){
-        string options=argv[1];
+        string options = argv[1];
         if (options=="-h"||options=="--help"){
             showHelp(argv);
         }
@@ -305,14 +304,21 @@ int main(int argc, char const *argv[]){
             cout<<"Version: "<<VERSION<<endl;
         }
     }
-    else if(argc>3){
-        cerr<<"Error: Too many argument"<<endl;
-    }
     else{
-		ifstream sourceFile(argv[1]);
-		// ifstream sourceFile("D:\\Code\\CPU\\gcd.asm");
-		// ofstream outputFile("D:\\Code\\CPU\\gcd.hex");
-		ofstream outputFile(argv[2]);
+        string options = argv[1];
+        string fmt = "%08X %08X";
+        int source, output;
+        if(options=="-f"||options=="--format"){
+            fmt = argv[2];
+            source = 3;
+            output = 4;
+        }
+        else{
+            source = 1;
+            output = 2;
+        }
+		ifstream sourceFile(argv[source]);
+		ofstream outputFile(argv[output]);
         if (!sourceFile){
             cerr<<"Error: Can not open source file "<<argv[1]<<endl;
             return 1;
@@ -328,7 +334,7 @@ int main(int argc, char const *argv[]){
 				content.push_back(tmp);
 			}
 			for (unsigned int i = 0; i < content.size(); i++){
-				if (!trans(outputFile, content, i, line))line++;
+				if (!trans(outputFile, content, i, line, fmt))line++;
 			}
         }
     }
