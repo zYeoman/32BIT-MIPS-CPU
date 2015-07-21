@@ -1,1 +1,8 @@
+modelsim.ini
+*.mpf
+work*
+*.mti
+*.bak
+*.wlf
+
 *.obj
