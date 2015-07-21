@@ -5,13 +5,13 @@ Description : ID to EX register
 INPUT : clk, rst, EN, all acitve high
         AluSrc1_In, AluSrc2_In, RegWrite_In, Branch_In, MemWrite_In, MemRead_In, 
         [31:0] PC_In, DataBusA_In, DataBusB_In, Imm_In,
-        [4:0] Rd_In, Rt_In, 
+        [4:0] Rd_In, Rt_In, Shamt_In
         [5:0] ALUFun_In, 
         [3:0] PCSrc_In, 
         [1:0] RegDst_In, MemtoReg_In, 
 OUTPUT : AluSrc1_Out, AluSrc2_Out, RegWrite_Out, Branch_Out, MemWrite_Out, MemRead_Out, 
         [31:0] PC_Out, DataBusA_Out, DataBusB_Out, Imm_Out,
-        [4:0] Rd_Out, Rt_Out, 
+        [4:0] Rd_Out, Rt_Out, Shamt_Out
         [5:0] ALUFun_Out, 
         [3:0] PCSrc_Out, 
         [1:0] RegDst_Out, MemtoReg_Out, 
@@ -23,13 +23,13 @@ module ID2EX(
     input clk, rst, flush, 
     input AluSrc1_In, AluSrc2_In, RegWrite_In, Branch_In, MemWrite_In, MemRead_In, Sign_In,
     input [31:0] PC_In, DataBusA_In, DataBusB_In, Imm_In,
-    input [4:0] Rd_In, Rt_In, 
+    input [4:0] Rd_In, Rt_In, Shamt_In
     input [5:0] ALUFun_In, 
     input [3:0] PCSrc_In, 
     input [1:0] RegDst_In, MemtoReg_In, 
     output reg AluSrc1_Out, AluSrc2_Out, RegWrite_Out, Branch_Out, MemWrite_Out, MemRead_Out, Sign_Out,
     output reg [31:0] PC_Out, DataBusA_Out, DataBusB_Out, Imm_Out,
-    output reg [4:0] Rd_Out, Rt_Out, 
+    output reg [4:0] Rd_Out, Rt_Out, Shamt_Out
     output reg [5:0] ALUFun_Out, 
     output reg [3:0] PCSrc_Out, 
     output reg [1:0] RegDst_Out, MemtoReg_Out, 
@@ -55,6 +55,7 @@ module ID2EX(
             PCSrc_Out <= 0;
             RegDst_Out <= 0;
             MemtoReg_Out <= 0;
+            Shamt_Out <= 0;
         end else 
             AluSrc1_Out <= AluSrc1_In;
             AluSrc2_Out <= AluSrc2_In;
@@ -73,6 +74,7 @@ module ID2EX(
             PCSrc_Out <= PCSrc_In;
             RegDst_Out <= RegDst_In;
             MemtoReg_Out <= MemtoReg_In;
+            Shamt_Out <= Shamt_In;
     end
 
 endmodule

@@ -5,12 +5,10 @@ Description : MEM to WB register
 INPUT : clk, rst, EN, all active high
         [31:0] PC_In, ALUOut_In, rdata_In, 
         [4:0] AddrC_In, 
-        [3:0] PCSrc_In, 
         [1:0] MemtoReg_In, 
 OUTPUT : RegWrite_Out
         [31:0] PC_Out, ALUOut_Out, rdata_Out, 
         [4:0] AddrC_Out, 
-        [3:0] PCSrc_Out, 
         [1:0] MemtoReg_Out, 
 Author : Yeoman Zhuang
 Release : *
