@@ -71,36 +71,50 @@ module CPU(
         ID2EX_Sign_In;
     wire [31:0] ID2EX_DataBusA_In, 
         ID2EX_DataBusB_In, 
-        ID2EX_Imm_In, 
-    wire [4:0] ID2EX_Rd_In, ID2EX_Rt_In, 
-    wire [5:0] ID2EX_ALUFun_In, 
-    wire [3:0] ID2EX_PCSrc_In, 
-    wire [1:0] ID2EX_RegDst_In, ID2EX_MemtoReg_In, 
+        ID2EX_Imm_In;
+    wire [4:0] ID2EX_Rd_In, ID2EX_Rt_In; 
+    wire [5:0] ID2EX_ALUFun_In; 
+    wire [3:0] ID2EX_PCSrc_In;
+    wire [1:0] ID2EX_RegDst_In, ID2EX_MemtoReg_In;
     wire ID2EX_AluSrc1_Out, 
         ID2EX_AluSrc2_Out, 
         ID2EX_RegWrite_Out, 
         ID2EX_Branch_Out, 
         ID2EX_MemWrite_Out, 
         ID2EX_MemRead_Out, 
-        ID2EX_Sign_Out,
+        ID2EX_Sign_Out;
     wire [31:0] ID2EX_DataBusA_Out, 
         ID2EX_DataBusB_Out, 
         ID2EX_Imm_Out,
+        DataBusC;
     wire [4:0] ID2EX_Rd_Out, 
-        ID2EX_Rt_Out, 
-    wire [5:0] ID2EX_ALUFun_Out, 
-    wire [3:0] ID2EX_PCSrc_Out, 
+        ID2EX_Rt_Out;
+    wire [5:0] ID2EX_ALUFun_Out; 
+    wire [3:0] ID2EX_PCSrc_Out; 
     wire [1:0] ID2EX_RegDst_Out, 
-        ID2EX_MemtoReg_Out, 
+        ID2EX_MemtoReg_Out;
 
 
     wire IRQ;               //input
     wire ExtOp,LuOp,Sign;   //output
+    wire [4:0] Rs;
+    wire [4:0] Rd;
+    wire [4:0] Rt;
+    wire Imm16;
+    wire [31:0] ConBA;
 
     assign ID2EX_PC_In = IFPC_Out;
-    assign ID2EX_Rd_In = IF2ID_InstructionOut[15:11];
-    assign ID2EX_Rt_In = IF2ID_InstructionOut[20:16];
+    assign Rd = IF2ID_InstructionOut[15:11];
+    assign Rt = IF2ID_InstructionOut[20:16];
+    assign Rs = IF2ID_InstructionOut[25:21];
 
+    assign DataBusC = ExtOp ? {{16{Imm16[15]}}, Imm16} : {16'b0, Imm16};
+    assign ID2EX_Imm_In = LuOp ? {Imm16, 16'b0} : DataBusC;
+
+    assign ConBA = ;
+
+    assign ID2EX_Rd_In = Rd;
+    assign ID2EX_Rd_In = Rt;
 
     Control control(
         .irq(IRQ), .PC31(IF2ID_PCOut[31]), 
@@ -117,6 +131,7 @@ module CPU(
 
     wire [31:0] wdata;
 
+
     always @ (*) begin
         case (MEM2WB_MemtoReg_Out)
             2'h0: wdata = MEM2WB_ALUOut_Out;
@@ -127,10 +142,10 @@ module CPU(
 
     Register register(
         .clk(clk), .rst(rst),
-        .RegWrite(RegWrite), 
+        .RegWrite(MEM2WB_RegWrite_Out), 
         .r1(Rs), .r2(Rt), .w(MEM2WB_AddrC_Out), 
         .wdata(wdata), 
-        .rdata1(DataBusA), .rdata2(DataBusB)
+        .rdata1(ID2EX_DataBusA_In), .rdata2(ID2EX_DataBusB_In)
     );
 
     ID2EX RegID2EX(
@@ -213,16 +228,16 @@ module CPU(
         .MemtoReg_Out(EX2MEM_MemtoReg_Out)
     );
 
-    wire MEM2WB_RegWrite_In, 
+    wire MEM2WB_RegWrite_In; 
     wire [31:0] MEM2WB_ALUOut_In, 
-        MEM2WB_rdata_In, 
-    wire [4:0] MEM2WB_AddrC_In, 
-    wire [1:0] MEM2WB_MemtoReg_In, 
-    wire MEM2WB_RegWrite_Out, 
+        MEM2WB_rdata_In;
+    wire [4:0] MEM2WB_AddrC_In; 
+    wire [1:0] MEM2WB_MemtoReg_In; 
+    wire MEM2WB_RegWrite_Out; 
     wire [31:0] MEM2WB_ALUOut_Out, 
-        MEM2WB_rdata_Out, 
-    wire [4:0] MEM2WB_AddrC_Out, 
-    wire [1:0] MEM2WB_MemtoReg_Out, 
+        MEM2WB_rdata_Out; 
+    wire [4:0] MEM2WB_AddrC_Out; 
+    wire [1:0] MEM2WB_MemtoReg_Out; 
 
     MEM2WB RegMEM2WB(
         .clk(clk), 
