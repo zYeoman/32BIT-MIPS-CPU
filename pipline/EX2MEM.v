@@ -18,14 +18,17 @@ Release : *
 */
 
 module EX2MEM(
-    input clk, rst, flush, 
+    input clk, rst, EN, 
     input RegWrite_In, MemWrite_In, MemRead_In, 
 <<<<<<< HEAD:pipeline/EX2MEM.v
     input [31:0] PC_In, ConBA_In, ALUOut_In, 
+<<<<<<< HEAD:pipeline/EX2MEM.v
     // !!! AddrC i.e. EX2MEM_Rd
 =======
     input [31:0] PC_In, ALUOut_In, 
 >>>>>>> origin/master:pipline/EX2MEM.v
+=======
+>>>>>>> parent of 52875b7... Change 'pipline' into 'pipeline', `EN` to `flush`:pipline/EX2MEM.v
     input [4:0] AddrC_In, 
     input [3:0] PCSrc_In, 
     input [1:0] MemtoReg_In, 
@@ -47,7 +50,7 @@ module EX2MEM(
             AddrC_Out <= 0;
             PCSrc_Out <= 0;
             MemtoReg_Out <= 0;
-        end else 
+        end else if (EN) begin
             RegWrite_Out <= RegWrite_In;
             MemWrite_Out <= MemWrite_In;
             MemRead_Out <= MemRead_In;
@@ -57,19 +60,29 @@ module EX2MEM(
             PCSrc_Out <= PCSrc_In;
             MemtoReg_Out <= MemtoReg_In;
 <<<<<<< HEAD:pipeline/EX2MEM.v
+<<<<<<< HEAD:pipeline/EX2MEM.v
 =======
+=======
+>>>>>>> parent of 52875b7... Change 'pipline' into 'pipeline', `EN` to `flush`:pipline/EX2MEM.v
         end else begin
             RegWrite_Out <= RegWrite_Out;
             MemWrite_Out <= MemWrite_Out;
             MemRead_Out <= MemRead_Out;
             PC_Out <= PC_Out;
+<<<<<<< HEAD:pipeline/EX2MEM.v
+=======
+            ConBA_Out <= ConBA_Out;
+>>>>>>> parent of 52875b7... Change 'pipline' into 'pipeline', `EN` to `flush`:pipline/EX2MEM.v
             ALUOut_Out <= ALUOut_Out;
             AddrC_Out <= AddrC_Out;
             PCSrc_Out <= PCSrc_Out;
             MemtoReg_Out <= MemtoReg_Out;
             
         end
+<<<<<<< HEAD:pipeline/EX2MEM.v
 >>>>>>> origin/master:pipline/EX2MEM.v
+=======
+>>>>>>> parent of 52875b7... Change 'pipline' into 'pipeline', `EN` to `flush`:pipline/EX2MEM.v
     end
 
 endmodule

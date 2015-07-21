@@ -10,15 +10,19 @@ Release : *
 */
 
 module IF(
-    input clk, rst, flush,
+    input clk, rst, EN,
     input [31:0] PC_In,
     output reg [31:0] PC_Out
 );
     always @(posedge clk or posedge rst) begin
-        if (rst|flush) begin
+        if (rst) begin
             // reset
             PC_Out <= 0;
-        end else 
-            PC_Out <= PC_In; 
+        end else if (EN) begin
+            PC_Out <= PC_In;
+        end else begin
+            PC_Out <= PC_Out;
+        end
     end
+
 endmodule
