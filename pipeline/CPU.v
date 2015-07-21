@@ -251,8 +251,8 @@ module CPU(
     );
 
 
-    assign EX2MEM_AddrC_In = (ID2EX_RegDst_Out==2'h0) ? Rd : 
-        (ID2EX_RegDst_Out==2'h1) ? Rt : 
+    assign EX2MEM_AddrC_In = (ID2EX_RegDst_Out==2'h0) ? ID2EX_Rd_Out : 
+        (ID2EX_RegDst_Out==2'h1) ? ID2EX_Rt_Out : 
         (ID2EX_RegDst_Out==2'h2) ? 5'd31 : // Ra
         (ID2EX_RegDst_Out==2'h3) ? 5'd26 : // Xp
         5'b0; // zero won't be write
