@@ -10,7 +10,7 @@ Release : *
 */
 
 module IF2ID(
-    input clk, rst, EN, 
+    input clk, rst, flush, 
     input [31:0]PCIn, InstructionIn, 
     output reg [31:0] PCOut, InstructionOut
 );
@@ -18,17 +18,13 @@ module IF2ID(
     parameter initial = 32'h0000_0000;
     
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
+        if (rst|flush) begin
             // reset
             PCOut<=initial;
             InstructionOut<=initial;
-        end else if (EN) begin
+        end else 
             PCOut<=PCIn;
             InstructionOut<=InstructionIn;
-        end else begin
-            PCOut<=PCOut;
-            InstructionOut<=InstructionOut;
-        end
     end
 
 endmodule

@@ -20,7 +20,7 @@ Release : *
 */
 
 module ID2EX(
-    input clk, rst, EN, 
+    input clk, rst, flush, 
     input AluSrc1_In, AluSrc2_In, RegWrite_In, Branch_In, MemWrite_In, MemRead_In, Sign_In,
     input [31:0] PC_In, DataBusA_In, DataBusB_In, Imm_In,
     input [4:0] Rd_In, Rt_In, 
@@ -36,7 +36,7 @@ module ID2EX(
 );
 
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
+        if (rst|flush) begin
             // reset
             AluSrc1_Out <= 0;
             AluSrc2_Out <= 0;
@@ -55,7 +55,7 @@ module ID2EX(
             PCSrc_Out <= 0;
             RegDst_Out <= 0;
             MemtoReg_Out <= 0;
-        end else if (EN) begin
+        end else 
             AluSrc1_Out <= AluSrc1_In;
             AluSrc2_Out <= AluSrc2_In;
             RegWrite_Out <= RegWrite_In;
@@ -73,25 +73,6 @@ module ID2EX(
             PCSrc_Out <= PCSrc_In;
             RegDst_Out <= RegDst_In;
             MemtoReg_Out <= MemtoReg_In;
-        end else begin
-            AluSrc1_Out <= AluSrc1_Out;
-            AluSrc2_Out <= AluSrc2_Out;
-            RegWrite_Out <= RegWrite_Out;
-            Branch_Out <= Branch_Out;
-            MemWrite_Out <= MemWrite_Out;
-            MemRead_Out <= MemRead_Out;
-            Sign_Out <= Sign_Out;
-            PC_Out <= PC_Out;
-            DataBusA_Out <= DataBusA_Out;
-            DataBusB_Out <= DataBusB_Out;
-            Imm_Out <= Imm_Out;
-            Rd_Out <= Rd_Out;
-            Rt_Out <= Rt_Out;
-            ALUFun_Out <= ALUFun_Out;
-            PCSrc_Out <= PCSrc_Out;
-            RegDst_Out <= RegDst_Out;
-            MemtoReg_Out <= MemtoReg_Out;
-        end
     end
 
 endmodule
