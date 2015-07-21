@@ -2,7 +2,7 @@ module Control (
     input irq, PC31,
     input [5:0] OpCode, Funct,
     output [2:0] PCSrc,  
-    output [1:0] RegDst, MemtoReg, nextPC,
+    output [1:0] RegDst, MemtoReg, nextPC,//NextPC no use
     output RegWrite, ALUSrc1, ALUSrc2, Branch,
         MemWrite, MemRead, ExtOp, LuOp, Sign,
     //output [3:0] ALUOp, 

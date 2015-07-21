@@ -38,11 +38,18 @@ module CPU(
         .PC_Out(IFPC_Out)
     );
 
-
-
-
     wire [31:0] IF2ID_InstructionIn,
         IF2ID_InstructionOut;
+
+    //IF阶段, EN信号？
+    //指令读取
+    InstructionMem insmem(
+        .addr(IFPC_Out),
+        .instruction(InstructionIn)
+    );
+
+    //下一条指令
+    assign IF2ID_PCIn = IFPC_Out + 32'h4;
 
     IF2ID RegIF2ID(
         .clk(clk), 
@@ -54,8 +61,6 @@ module CPU(
         .PCOut(IF2ID_PCOut), 
         .InstructionOut(IF2ID_InstructionOut)
     );
-
-
 
     wire ID2EX_AluSrc1_In, 
         ID2EX_AluSrc2_In, 
@@ -88,10 +93,57 @@ module CPU(
     wire [1:0] ID2EX_RegDst_Out, 
         ID2EX_MemtoReg_Out, 
 
+
+    wire IRQ;               //input
+    wire ExtOp,LuOp,Sign;   //output
+
+    assign ID2EX_PC_In = IFPC_Out;
+    assign ID2EX_Rd_In = IF2ID_InstructionOut[15:11];
+    assign ID2EX_Rt_In = IF2ID_InstructionOut[20:16];
+
+
+    Control control(
+        .irq(IRQ), .PC31(IF2ID_PCOut[31]), 
+        .OpCode(IF2ID_InstructionOut[31:26]), 
+        .Funct(IF2ID_InstructionOut[5:0]), 
+        .PCSrc(ID2EX_PCSrc_In), 
+        // .nextPC(nextPC), 
+        .RegDst(ID2EX_RegDst_In), .MemtoReg(ID2EX_MemtoReg_In), 
+        ///.ALUOp(ALUOp), 
+        .ALUFun(ID2EX_ALUFun_In), 
+        .RegWrite(ID2EX_RegWrite_In), .ALUSrc1(ID2EX_AluSrc1_In), .ALUSrc2(ID2EX_AluSrc2_In), .Branch(ID2EX_Branch_In),
+        .MemWrite(ID2EX_MemWrite_In), .MemRead(ID2EX_MemRead_In), .ExtOp(ExtOp), .LuOp(LuOp), .Sign(Sign)
+    );
+
+    wire [31:0] wdata;
+
+    always @ (*) begin
+        case (MEM2WB_MemtoReg_Out)
+            2'h0: wdata = ALUOut;
+            2'h1: wdata = MEM2WB_rdata_Out;
+            2'h2: wdata = IF2ID_PCOut;
+            default : wdata = 32'b0;
+    end
+
+    Register register(
+        .clk(clk), .rst(rst),
+        .RegWrite(RegWrite), 
+        .r1(Rs), .r2(Rt), .w(MEM2WB_AddrC_Out), 
+        .wdata(wdata), 
+        .rdata1(DataBusA), .rdata2(DataBusB)
+    );
+
     ID2EX RegID2EX(
         .clk(clk), 
         .rst(rst), 
         .EN(ID2EX_EN), 
+
+        .PC_In(ID2EX_PC_In), 
+        .DataBusA_In(ID2EX_DataBusA_In), 
+        .DataBusB_In(ID2EX_DataBusB_In), 
+        .Imm_In(ID2EX_Imm_In), 
+        .Rd_In(ID2EX_Rd_In), 
+        .Rt_In(ID2EX_Rt_In), 
 
         .AluSrc1_In(ID2EX_AluSrc1_In), 
         .AluSrc2_In(ID2EX_AluSrc2_In), 
@@ -99,12 +151,6 @@ module CPU(
         .Branch_In(ID2EX_Branch_In), 
         .MemWrite_In(ID2EX_MemWrite_In), 
         .MemRead_In(ID2EX_MemRead_In), 
-        .PC_In(ID2EX_PC_In), 
-        .DataBusA_In(ID2EX_DataBusA_In), 
-        .DataBusB_In(ID2EX_DataBusB_In), 
-        .Imm_In(ID2EX_Imm_In), 
-        .Rd_In(ID2EX_Rd_In), 
-        .Rt_In(ID2EX_Rt_In), 
         .ALUFun_In(ID2EX_ALUFun_In), 
         .PCSrc_In(ID2EX_PCSrc_In), 
         .RegDst_In(ID2EX_RegDst_In), 
@@ -131,16 +177,14 @@ module CPU(
     wire EX2MEM_RegWrite_In, 
         EX2MEM_MemWrite_In, 
         EX2MEM_MemRead_In;
-    wire [31:0] EX2MEM_ConBA_In, 
-        EX2MEM_ALUOut_In;
+    wire [31:0] EX2MEM_ALUOut_In;
     wire [4:0] EX2MEM_AddrC_In;
     wire [3:0] EX2MEM_PCSrc_In; 
     wire [1:0] EX2MEM_MemtoReg_In;
     wire EX2MEM_RegWrite_Out, 
         EX2MEM_MemWrite_Out, 
         EX2MEM_MemRead_Out;
-    wire [31:0] EX2MEM_ConBA_Out, 
-        EX2MEM_ALUOut_Out;
+    wire [31:0] EX2MEM_ALUOut_Out;
     wire [4:0] EX2MEM_AddrC_Out;
     wire [3:0] EX2MEM_PCSrc_Out; 
     wire [1:0] EX2MEM_MemtoReg_Out; 
@@ -154,7 +198,6 @@ module CPU(
         .MemWrite_In(EX2MEM_MemWrite_In), 
         .MemRead_In(EX2MEM_MemRead_In), 
         .PC_In(EX2MEM_PC_In), 
-        .ConBA_In(EX2MEM_ConBA_In), 
         .ALUOut_In(EX2MEM_ALUOut_In), 
         .AddrC_In(EX2MEM_AddrC_In), 
         .PCSrc_In(EX2MEM_PCSrc_In), 
@@ -164,7 +207,6 @@ module CPU(
         .MemWrite_Out(EX2MEM_MemWrite_Out), 
         .MemRead_Out(EX2MEM_MemRead_Out), 
         .PC_Out(EX2MEM_PC_Out), 
-        .ConBA_Out(EX2MEM_ConBA_Out), 
         .ALUOut_Out(EX2MEM_ALUOut_Out), 
         .AddrC_Out(EX2MEM_AddrC_Out), 
         .PCSrc_Out(EX2MEM_PCSrc_Out), 

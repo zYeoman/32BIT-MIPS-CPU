@@ -14,8 +14,8 @@ module CPU (
     wire [31:0] Instruction, 
         PC4, 
         ConBA;
-    wire IRQ;
-    wire [25:0] JT;
+    wire IRQ;               //Interrupt
+    wire [25:0] JT;         //j Addr
     wire [15:0] Imm16;
     wire [4:0] Shammt,
         Rd,
@@ -24,7 +24,7 @@ module CPU (
     wire [2:0] PCSrc;
     wire [1:0] RegDst,
         MemtoReg, 
-        nextPC;
+        nextPC;             //no use
     wire [3:0] ALUOp;
     wire RegWrite, 
         ALUSrc1, 
@@ -35,18 +35,18 @@ module CPU (
         ExtOp, 
         LuOp, 
         Sign;
-    wire [5:0] ALUFun;
-    wire [4:0] AddrC;
-    reg [31:0] wdata;
-    wire [31:0] rdata,
+    wire [5:0] ALUFun;      
+    wire [4:0] AddrC;       //Write Dst Addr
+    reg [31:0] wdata;       //Write data from memory
+    wire [31:0] rdata,      //read data from memory
         DataBusA,
         DataBusB;
-    wire [31:0] ALU1,
-        ALU2,
-        Imm, 
-        DataBusC;
-    wire [31:0] ALUOut;
-    wire [11:0] digi;
+    wire [31:0] ALU1,       //DataBusA or Shamt
+        ALU2,               //DataBudB or Imm
+        Imm,                //ExtImm/ZeroImm or luiImm
+        DataBusC;           //ExtImm or ZeroImm
+    wire [31:0] ALUOut;     //
+    wire [11:0] digi;       //display
 
     assign rst = ~rst_n;
     assign PC4 = PC + 32'h4;
