@@ -2,7 +2,7 @@ module Control (
     input irq, PC31,
     input [5:0] OpCode, Funct,
     output [2:0] PCSrc,  
-    output [1:0] RegDst, MemtoReg, nextPC,
+    output [1:0] RegDst, MemtoReg, //nextPC,
     output RegWrite, ALUSrc1, ALUSrc2, Branch,
         MemWrite, MemRead, ExtOp, LuOp, Sign,
     //output [3:0] ALUOp, 
@@ -37,10 +37,10 @@ module Control (
         (OpCode == 6'h02 || OpCode == 6'h03) ? 3'h2 : // J
         (OpCode == 6'h01 || (OpCode > 6'h03 && OpCode < 6'h08)) ? 3'h1 : // branch
         3'h0 ; // I
-    assign nextPC = (OpCode == 6'h00) ? ( (Funct == 6'h08)|(Funct == 6'h09) ? 2'h3 : 2'h0 ) : // R: jr jalr 3
-        (OpCode == 6'h02 || OpCode == 6'h03) ? 2'h2 : // J
-        (OpCode == 6'h01 || (OpCode > 6'h03 && OpCode < 6'h08)) ? 2'h1 : // branch
-        2'h0 ; 
+    // assign nextPC = (OpCode == 6'h00) ? ( (Funct == 6'h08)|(Funct == 6'h09) ? 2'h3 : 2'h0 ) : // R: jr jalr 3
+    //     (OpCode == 6'h02 || OpCode == 6'h03) ? 2'h2 : // J
+    //     (OpCode == 6'h01 || (OpCode > 6'h03 && OpCode < 6'h08)) ? 2'h1 : // branch
+    //     2'h0 ; 
     assign Branch = (OpCode < 6'h08) ? 1'b1 : 1'b0;
     assign RegWrite = (~PC31&irq)|(~PC31&EXC) ? 1'b1 : 
         (OpCode == 6'h01 || OpCode == 6'h02 || OpCode == 6'h04 || OpCode == 6'h05 || OpCode == 6'h06 || OpCode == 6'h07 || OpCode == 6'h2b || (OpCode==6'h00 && Funct==6'h08)) ? 1'b0 : 1'b1;

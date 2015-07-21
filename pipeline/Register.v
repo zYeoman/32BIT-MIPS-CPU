@@ -1,8 +1,10 @@
 module Register (
     input clk, rst,
     input RegWrite, 
+        IRQWrite, 
     input [4:0] r1, r2, w, // read & write addr
     input [31:0] wdata, // write data
+        PC,             // PC for ID stage instruction
     output [31:0] rdata1, rdata2
 );
     reg [31:0] Reg[31:1]; // 32 registers
@@ -14,7 +16,11 @@ module Register (
     always @ (posedge clk or posedge rst) begin
         if (rst)                               // posedge rst
             for(i=1;i<32;i=i+1) Reg[i]<=32'b0;  // clear regs
-        else if ( RegWrite && ~(w==5'b0) )      // posedge clk
+        else begin 
+            if ( RegWrite && ~(w==5'b0) )      // posedge clk
                 Reg[w] <= wdata;
+            if ( IRQWrite )
+                Reg[5'd26] <= PC;               // save address of this instruction
+        end
     end
 endmodule

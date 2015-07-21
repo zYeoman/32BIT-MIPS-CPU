@@ -15,7 +15,7 @@ Release : *
 */
 
 module MEM2WB(
-    input clk, rst, flush, 
+    input clk, rst,
     input RegWrite_In, 
     input [31:0] PC_In, ALUOut_In, rdata_In, 
     input [4:0] AddrC_In, 
@@ -23,11 +23,11 @@ module MEM2WB(
     output reg RegWrite_Out, 
     output reg [31:0] PC_Out, ALUOut_Out, rdata_Out, 
     output reg [4:0] AddrC_Out, 
-    output reg [1:0] MemtoReg_Out, 
+    output reg [1:0] MemtoReg_Out
 );
 
     always @(posedge clk or posedge rst) begin
-        if (rst|flush) begin
+        if (rst) begin
             // reset
             RegWrite_Out <= 0;
             PC_Out <= 0;

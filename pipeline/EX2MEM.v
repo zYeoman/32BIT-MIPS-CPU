@@ -18,16 +18,16 @@ Release : *
 */
 
 module EX2MEM(
-    input clk, rst, flush, 
+    input clk, rst, 
     input RegWrite_In, MemWrite_In, MemRead_In, 
-    input [31:0] PC_In, ALUOut_In, DataBusB_In
+    input [31:0] PC_In, ALUOut_In, DataBusB_In, 
     // !!! AddrC i.e. EX2MEM_Rd
     input [4:0] AddrC_In, 
     input [1:0] MemtoReg_In, 
     output reg RegWrite_Out, MemWrite_Out, MemRead_Out, 
-    output reg [31:0] PC_Out, ALUOut_Out, DataBusB_Out
+    output reg [31:0] PC_Out, ALUOut_Out, DataBusB_Out, 
     output reg [4:0] AddrC_Out, 
-    output reg [1:0] MemtoReg_Out, 
+    output reg [1:0] MemtoReg_Out
 );
 
     always @(posedge clk or posedge rst) begin

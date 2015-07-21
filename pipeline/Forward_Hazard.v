@@ -34,37 +34,38 @@ endmodule
 // directly connect from `instruction` outside this module
 module Hazard(
     input ID2EX_MemRead, 
-        Branch2, 
+        Branch, 
         Jump, 
     input[4:0] ID2EX_Rt, 
         IF2ID_Rs, 
         IF2ID_Rt, 
-    output reg IFID_flush, 
-        IDEX_flush, 
-        PC_write, 
-        IFID_write
+    output reg PCWrite, 
+        IF2ID_flush, 
+        IF2ID_write,
+        ID2EX_flush
 );
+    //
     always @(*) begin
-        if(ID2EX_MemRead&((ID2EX_Rt==IF2ID_Rs)|(ID2EX_Rt==IF2ID_Rt))) begin              //ID2EX_MemRead是第二个寄存器的存储器读使能，ID2EX_Rt是Rt寄存器的地址，Rs是rs地址
-            IFID_flush<=0;                                              //IFID_flush是第一个寄存器的清除使能
-            IDEX_flush<=1;                                          //IDEX_flush是第二个寄存器的清除使能
-            PC_write<=0;                                        //程序计数器的写使能    
-            IFID_write<=0;                                 //第一个寄存器的写使能
+        if(ID2EX_MemRead&((ID2EX_Rt==IF2ID_Rs)|(ID2EX_Rt==IF2ID_Rt))) begin
+            PCWrite = 1'b0;
+            IF2ID_flush = 1'b0;
+            IF2ID_write = 1'b0;
+            ID2EX_flush = 1'b1;
         end else if(Jump) begin
-            IFID_flush<=1;                                   
-            IDEX_flush<=0;
-            PC_write<=1;
-            IFID_write<=1;
-        end else if(Branch2) begin
-            IFID_flush<=1;
-            IDEX_flush<=1;
-            PC_write<=1;
-            IFID_write<=1;
+            PCWrite = 1'b1;
+            IF2ID_flush = 1'b1;
+            IF2ID_write = 1'b1;
+            ID2EX_flush = 1'b0;
+        end else if(Branch) begin 
+            PCWrite = 1'b1;
+            IF2ID_flush = 1'b1;
+            IF2ID_write = 1'b1;
+            ID2EX_flush = 1'b1;
         end else begin
-            IFID_flush<=0;
-            IDEX_flush<=0;
-            PC_write<=1;
-            IFID_write<=1;
+            PCWrite = 1'b1;
+            IF2ID_flush = 1'b0;
+            IF2ID_write = 1'b1;
+            ID2EX_flush = 1'b0;
         end
     end
  endmodule

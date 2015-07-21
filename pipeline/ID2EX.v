@@ -23,16 +23,16 @@ module ID2EX(
     input clk, rst, flush, 
     input AluSrc1_In, AluSrc2_In, RegWrite_In, Branch_In, MemWrite_In, MemRead_In, Sign_In,
     input [31:0] PC_In, DataBusA_In, DataBusB_In, Imm_In,
-    input [4:0] Rd_In, Rt_In, Shamt_In
+    input [4:0] Rd_In, Rt_In, Shamt_In, 
     input [5:0] ALUFun_In, 
-    input [3:0] PCSrc_In, 
+    input [2:0] PCSrc_In, 
     input [1:0] RegDst_In, MemtoReg_In, 
     output reg AluSrc1_Out, AluSrc2_Out, RegWrite_Out, Branch_Out, MemWrite_Out, MemRead_Out, Sign_Out,
     output reg [31:0] PC_Out, DataBusA_Out, DataBusB_Out, Imm_Out,
-    output reg [4:0] Rd_Out, Rt_Out, Shamt_Out
+    output reg [4:0] Rd_Out, Rt_Out, Shamt_Out, 
     output reg [5:0] ALUFun_Out, 
-    output reg [3:0] PCSrc_Out, 
-    output reg [1:0] RegDst_Out, MemtoReg_Out, 
+    output reg [2:0] PCSrc_Out, 
+    output reg [1:0] RegDst_Out, MemtoReg_Out
 );
 
     always @(posedge clk or posedge rst) begin

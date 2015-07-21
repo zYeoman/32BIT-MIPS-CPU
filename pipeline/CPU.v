@@ -14,10 +14,8 @@ module CPU(
 
     wire IF_flush,
         IF2ID_flush,
-        ID2EX_flush,
-        EX2MEM_flush,
-        MEM2WB_flush;
-    wire [31:0] IFPC_In,
+        ID2EX_flush;
+    wire [31:0] IFPC_In, 
         IFPC_Out,
         IF2ID_PCIn,
         IF2ID_PCOut,
@@ -28,19 +26,21 @@ module CPU(
         MEM2WB_PC_In,
         MEM2WB_PC_Out;
 
-    // IF阶段
-    // 非常不完善！！！还有中断什么的还没写都
-    always @(*) begin
-        case (PCSrc)                //谁的PCSrc？
-            3'h0: PC <= IF2ID_PCIn; //IF2ID_PCIn = PC+4
-            3'h1: PC <= ALUOut[0] ? ConBA : PC4;    //这里有ALUOut么？
-            3'h2: PC <= {PC[31:28], JT, 2'b0};      //还没取出指令来呢
-            3'h3: PC <= DataBusA; // jr jalr $Ra
-            3'h4: PC <= 32'h8000_0004; // ILLOP
-            3'h5: PC <= 32'h8000_0008; // XADR
-            default: PC <= 32'h8000_0008;
-        endcase
-    end
+    // // IF阶段
+    // // 非常不完善！！！还有中断什么的还没写都
+    // always @(*) begin
+    //     case (PCSrc)                //谁的PCSrc？
+    //         3'h0: PC <= IF2ID_PCIn; //IF2ID_PCIn = PC+4
+    //         3'h1: PC <= ALUOut[0] ? ConBA : PC4;    //这里有ALUOut么？
+    //         3'h2: PC <= {PC[31:28], JT, 2'b0};      //还没取出指令来呢
+    //         3'h3: PC <= DataBusA; // jr jalr $Ra
+    //         3'h4: PC <= 32'h8000_0004; // ILLOP
+    //         3'h5: PC <= 32'h8000_0008; // XADR
+    //         default: PC <= 32'h8000_0008;
+    //     endcase
+    // end
+
+    assign IFPC_In = IFPC_Out + 32'h4;
 
     IF RegIF(
         .clk(clk), 
@@ -57,17 +57,17 @@ module CPU(
     //指令读取
     InstructionMem insmem(
         .addr(IFPC_Out),
-        .instruction(InstructionIn)
+        .instruction(IF2ID_InstructionIn)
     );
 
-    //下一条指令
-    assign IF2ID_PCIn = IFPC_Out + 32'h4;
+    //本条指令
+    assign IF2ID_PCIn = IFPC_Out; 
 
     IF2ID RegIF2ID(
         .clk(clk), 
         .rst(rst), 
         .flush(IF2ID_flush), 
-
+        .EN(1'b1), 
         .PCIn(IF2ID_PCIn), 
         .InstructionIn(IF2ID_InstructionIn), 
         .PCOut(IF2ID_PCOut), 
@@ -90,7 +90,7 @@ module CPU(
         ID2EX_Rt_In, 
         ID2EX_Shamt_In; 
     wire [5:0] ID2EX_ALUFun_In; 
-    wire [3:0] ID2EX_PCSrc_In;
+    wire [2:0] ID2EX_PCSrc_In;
     wire [1:0] ID2EX_RegDst_In, 
         ID2EX_MemtoReg_In;
     wire ID2EX_AluSrc1_Out, 
@@ -108,28 +108,32 @@ module CPU(
         ID2EX_Rt_Out,
         ID2EX_Shamt_Out;
     wire [5:0] ID2EX_ALUFun_Out; 
-    wire [3:0] ID2EX_PCSrc_Out; 
+    wire [2:0] ID2EX_PCSrc_Out; 
     wire [1:0] ID2EX_RegDst_Out, 
         ID2EX_MemtoReg_Out;
 
 
     wire IRQ;               //input
+    wire IRQWrite;
     wire ExtOp,LuOp,Sign;   //output
     wire [4:0] Rs;
     wire [4:0] Rd;
     wire [4:0] Rt;
-    wire Imm16;
+    wire [15:0] Imm16;
     wire [31:0] ConBA;
+
+    assign IRQWrite = ~(IFPC_In[31])&IRQ ; 
 
     assign ID2EX_PC_In = IFPC_Out;
     assign ID2EX_Shamt_In = IF2ID_InstructionOut[10:6];
     assign Rd = IF2ID_InstructionOut[15:11];
     assign Rt = IF2ID_InstructionOut[20:16];
     assign Rs = IF2ID_InstructionOut[25:21];
-
+    assign Imm16 = IF2ID_InstructionOut[15:0];
+    assign ID2EX_Sign_In = Sign;
     assign DataBusC = ExtOp ? {{16{Imm16[15]}}, Imm16} : {16'b0, Imm16};
     assign ID2EX_Imm_In = LuOp ? {Imm16, 16'b0} : DataBusC;
-    assign ConBA = {DataBusC[29:0],2'b0} + IF2ID_PCOut;
+    assign ConBA = {DataBusC[29:0],2'b0} + IF2ID_PCOut + 32'h4;
 
     assign ID2EX_Rd_In = Rd;
     assign ID2EX_Rt_In = Rt;
@@ -147,20 +151,16 @@ module CPU(
         .MemWrite(ID2EX_MemWrite_In), .MemRead(ID2EX_MemRead_In), .ExtOp(ExtOp), .LuOp(LuOp), .Sign(Sign)
     );
 
-    wire [31:0] wdata;
+    reg [31:0] wdata;
 
-
-    always @ (*) begin
-        case (MEM2WB_MemtoReg_Out)
-            2'h0: wdata = MEM2WB_ALUOut_Out;
-            2'h1: wdata = MEM2WB_rdata_Out;
-            2'h2: wdata = IFPCOut;      //中断时，未完成！！！！！
-            default : wdata = 32'b0;
-    end
+    wire MEM2WB_RegWrite_Out; 
+    wire [4:0] MEM2WB_AddrC_Out; 
 
     Register register(
         .clk(clk), .rst(rst),
         .RegWrite(MEM2WB_RegWrite_Out), 
+        .IRQWrite(IRQWrite), 
+        .PC(IFPC_Out), 
         .r1(Rs), .r2(Rt), .w(MEM2WB_AddrC_Out), 
         .wdata(wdata), 
         .rdata1(ID2EX_DataBusA_In), .rdata2(ID2EX_DataBusB_In)
@@ -178,6 +178,7 @@ module CPU(
         .Rd_In(ID2EX_Rd_In), 
         .Rt_In(ID2EX_Rt_In), 
         .Shamt_In(ID2EX_Shamt_In),
+        .Sign_In(ID2EX_Sign_In), 
 
         .AluSrc1_In(ID2EX_AluSrc1_In), 
         .AluSrc2_In(ID2EX_AluSrc2_In), 
@@ -194,9 +195,10 @@ module CPU(
         .AluSrc1_Out(ID2EX_AluSrc1_Out), 
         .AluSrc2_Out(ID2EX_AluSrc2_Out), 
         .RegWrite_Out(ID2EX_RegWrite_Out), 
-        .ranch_Out(ID2EX_ranch_Out), 
+        .Branch_Out(ID2EX_ranch_Out), 
         .MemWrite_Out(ID2EX_MemWrite_Out), 
         .MemRead_Out(ID2EX_MemRead_Out), 
+        .Sign_Out(ID2EX_Sign_Out), 
         .PC_Out(ID2EX_PC_Out), 
         .DataBusA_Out(ID2EX_DataBusA_Out), 
         .DataBusB_Out(ID2EX_DataBusB_Out), 
@@ -239,12 +241,12 @@ module CPU(
     assign EX2MEM_DataBusB_In = ID2EX_DataBusB_Out;
 
 
-    assign ALU1 = ID2EX_AluSrc1_Out ? {27'b0,ID2EX_Shamt_Out[4:0]} : DataBusA;
-    assign ALU2 = ID2EX_AluSrc2_Out ? Imm : DataBusB;
+    assign ALU1 = ID2EX_AluSrc1_Out ? {27'b0,ID2EX_Shamt_Out[4:0]} : ID2EX_DataBusA_Out;
+    assign ALU2 = ID2EX_AluSrc2_Out ? ID2EX_Imm_Out : ID2EX_DataBusB_Out;
 
     ALU alu(
         .in1(ALU1), .in2(ALU2), 
-        .ALUFun(ID2EX_ALUFun_Out), .sign(Sign), 
+        .ALUFun(ID2EX_ALUFun_Out), .sign(ID2EX_Sign_Out), 
         .out(EX2MEM_ALUOut_In)
     );
 
@@ -258,7 +260,6 @@ module CPU(
     EX2MEM RegEX2MEM(
         .clk(clk), 
         .rst(rst), 
-        .flush(EX2MEM_flush), 
 
         .RegWrite_In(EX2MEM_RegWrite_In), 
         .MemWrite_In(EX2MEM_MemWrite_In), 
@@ -284,12 +285,20 @@ module CPU(
     wire [31:0] MEM2WB_ALUOut_In, 
         MEM2WB_rdata_In;
     wire [4:0] MEM2WB_AddrC_In; 
-    wire [1:0] MEM2WB_MemtoReg_In; 
-    wire MEM2WB_RegWrite_Out; 
+    wire [1:0] MEM2WB_MemtoReg_In;
     wire [31:0] MEM2WB_ALUOut_Out, 
         MEM2WB_rdata_Out; 
-    wire [4:0] MEM2WB_AddrC_Out; 
     wire [1:0] MEM2WB_MemtoReg_Out; 
+
+    always @ (*) begin
+        case (MEM2WB_MemtoReg_Out)
+            2'h0: wdata = MEM2WB_ALUOut_Out;
+            2'h1: wdata = MEM2WB_rdata_Out; // TODO MEM2WB_MemtoReg_Out 1bit is enough
+            default : wdata = 32'b0;
+        endcase
+    end
+
+    wire [11:0] digi;
 
     //MEM阶段
     DataMem datamem(
@@ -304,13 +313,15 @@ module CPU(
         .irq(IRQ)
     );
 
-
-
+    assign MEM2WB_RegWrite_In = EX2MEM_RegWrite_Out;
+    assign MEM2WB_PC_In = EX2MEM_PC_Out;
+    assign MEM2WB_ALUOut_In = EX2MEM_ALUOut_Out;
+    assign MEM2WB_AddrC_In = EX2MEM_AddrC_Out;
+    assign MEM2WB_MemtoReg_In = EX2MEM_MemtoReg_Out;
 
     MEM2WB RegMEM2WB(
         .clk(clk), 
         .rst(rst), 
-        .flush(MEM2WB_flush), 
         .RegWrite_In(MEM2WB_RegWrite_In), 
         .PC_In(MEM2WB_PC_In), //可能没用
         .ALUOut_In(MEM2WB_ALUOut_In), 
