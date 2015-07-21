@@ -4,12 +4,12 @@ Compiler : Quartus II
 Description : EX to MEM register
 INPUT : clk, rst, EN, all active high
         RegWrite_In, MemWrite_In, MemRead_In, 
-        [31:0] PC_In, ConBA_In, ALUOut_In, 
+        [31:0] PC_In, ALUOut_In, 
         [4:0] AddrC_In, 
         [3:0] PCSrc_In, 
         [1:0] MemtoReg_In, 
 OUTPUT : RegWrite_Out, MemWrite_Out, MemRead_Out, 
-        [31:0] PC_Out, ConBA_Out, ALUOut_Out, 
+        [31:0] PC_Out, ALUOut_Out, 
         [4:0] AddrC_Out, 
         [3:0] PCSrc_Out, 
         [1:0] MemtoReg_Out, 
@@ -20,13 +20,13 @@ Release : *
 module EX2MEM(
     input clk, rst, flush, 
     input RegWrite_In, MemWrite_In, MemRead_In, 
-    input [31:0] PC_In, ConBA_In, ALUOut_In, 
+    input [31:0] PC_In, ALUOut_In, 
     // !!! AddrC i.e. EX2MEM_Rd
     input [4:0] AddrC_In, 
     input [3:0] PCSrc_In, 
     input [1:0] MemtoReg_In, 
     output reg RegWrite_Out, MemWrite_Out, MemRead_Out, 
-    output reg [31:0] PC_Out, ConBA_Out, ALUOut_Out, 
+    output reg [31:0] PC_Out, ALUOut_Out, 
     output reg [4:0] AddrC_Out, 
     output reg [3:0] PCSrc_Out, 
     output reg [1:0] MemtoReg_Out, 
@@ -39,7 +39,6 @@ module EX2MEM(
             MemWrite_Out <= 0;
             MemRead_Out <= 0;
             PC_Out <= 0;
-            ConBA_Out <= 0;
             ALUOut_Out <= 0;
             AddrC_Out <= 0;
             PCSrc_Out <= 0;
@@ -49,7 +48,6 @@ module EX2MEM(
             MemWrite_Out <= MemWrite_In;
             MemRead_Out <= MemRead_In;
             PC_Out <= PC_In;
-            ConBA_Out <= ConBA_In;
             ALUOut_Out <= ALUOut_In;
             AddrC_Out <= AddrC_In;
             PCSrc_Out <= PCSrc_In;
