@@ -68,7 +68,7 @@ module ID2EX(
             MemWrite_Out <= 0;
             MemRead_Out <= 0;
             Sign_Out <= 0;
-            PC_Out <= 0;
+            PC_Out <= {PC_Out[31], {31{1'b0}}};
             DataBusA_Out <= 0;
             DataBusB_Out <= 0;
             Imm_Out <= 0;

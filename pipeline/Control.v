@@ -56,14 +56,18 @@ module Control (
         (OpCode == 6'h23 || OpCode == 6'hf || OpCode == 6'h8 || OpCode == 6'h9 || OpCode == 6'hc || OpCode == 6'hd || OpCode == 6'ha || OpCode == 6'hb) ? 2'h1 : 
         (OpCode == 6'h03 || (OpCode == 6'h0 && Funct == 6'h9) ) ? 2'h2 : 
         2'h0 ;
-    assign MemRead = (~PC31&irq)|(OpCode == 6'h23) ? 1'b1 : 1'b0;
+    assign MemRead = (~PC31&irq) ? 1'b0 : 
+        (OpCode == 6'h23) ? 1'b1 : 1'b0;
     assign MemWrite = (OpCode == 6'h2b) ? 1'b1 : 1'b0;
-    assign MemtoReg = (~PC31&irq)|(~PC31&EXC) ? 2'h2 :
+    assign MemtoReg = (~PC31&irq) ? 2'h0 : 
+        (~PC31&EXC) ? 2'h2 :
         (OpCode == 6'h23) ? 2'h1 : 
         ( OpCode == 6'h03 || (OpCode==6'h00 && (Funct == 6'h08 || Funct == 6'h09)) ) ? 2'h2 : 
         2'h0 ;
-    assign ALUSrc1 = (OpCode == 6'h00) ? ( (Funct == 6'h0 || Funct == 6'h2 || Funct == 6'h3) ? 1'b1 : 1'b0 ) : 1'b0;
-    assign ALUSrc2 = (OpCode == 6'h00 || (OpCode >= 6'h1 && OpCode <= 6'h7) ) ? 1'b0 : 1'b1;
+    assign ALUSrc1 = (~PC31&irq) ? 1'b0 : 
+        (OpCode == 6'h00) ? ( (Funct == 6'h0 || Funct == 6'h2 || Funct == 6'h3) ? 1'b1 : 1'b0 ) : 1'b0;
+    assign ALUSrc2 = (~PC31&irq) ? 1'b0 : 
+        (OpCode == 6'h00 || (OpCode >= 6'h1 && OpCode <= 6'h7) ) ? 1'b0 : 1'b1;
     assign ExtOp = (OpCode == 6'h0) ? ( (Funct == 6'h20 || Funct == 6'h22 || Funct == 6'h2a || Funct == 6'h8) ? 1'b1 : 1'b0 ) : 
             ( (OpCode == 6'h23 || OpCode == 6'h2b || OpCode == 6'h8 || OpCode == 6'h1 || OpCode == 6'ha || (OpCode >= 6'h4 && OpCode <= 6'h7) ) ? 1'b1 : 1'b0 );
     assign LuOp = (OpCode == 6'h0f) ? 1'b1 : 1'b0;
@@ -91,37 +95,27 @@ module Control (
         endcase
 
     always @ (*)
-        case (OpCode)
-            6'h00: ALUFun = f;
-            6'h23: ALUFun = ALUadd;
-            6'h2b: ALUFun = ALUadd;
-            6'h0f: ALUFun = ALUadd;
-            6'h08: ALUFun = ALUadd;
-            6'h09: ALUFun = ALUadd;
-            6'h0c: ALUFun = ALUand;
-            6'h0d: ALUFun = ALUor;
-            6'h0a: ALUFun = ALUlt;
-            6'h0b: ALUFun = ALUlt;
-            6'h04: ALUFun = ALUeq;
-            6'h05: ALUFun = ALUneq;
-            6'h06: ALUFun = ALUlez;
-            6'h07: ALUFun = ALUgtz;
-            6'h01: ALUFun = ALUgez;
-            6'h02: ALUFun = ALUadd;
-            6'h03: ALUFun = ALUadd;
-            default : ALUFun = ALUnop; // through
-        endcase
-
-    // assign ALUOp[3] = OpCode[0];
-    // assign ALUOp[2:0] = 
-    //     // R-Type
-    //     (OpCode == 6'b0) ? 3'b010 : 
-    //     // beq bne blez bgtz bgez
-    //     (OpCode == 6'h4||OpCode == 6'h5||OpCode == 6'h6||
-    //         OpCode == 6'h7||OpCode == 6'h1) ? 3'b001: 
-    //     // andi
-    //     (OpCode == 6'hc) ? 3'b100: 
-    //     // slti sltiu
-    //     (OpCode == 6'ha||OpCode == 6'hb) ? 3'b101: 
-    //     3'b000;
+        if (~PC31&irq)
+            ALUFun = ALUadd;
+        else 
+            case (OpCode)
+                6'h00: ALUFun = f;
+                6'h23: ALUFun = ALUadd;
+                6'h2b: ALUFun = ALUadd;
+                6'h0f: ALUFun = ALUadd;
+                6'h08: ALUFun = ALUadd;
+                6'h09: ALUFun = ALUadd;
+                6'h0c: ALUFun = ALUand;
+                6'h0d: ALUFun = ALUor;
+                6'h0a: ALUFun = ALUlt;
+                6'h0b: ALUFun = ALUlt;
+                6'h04: ALUFun = ALUeq;
+                6'h05: ALUFun = ALUneq;
+                6'h06: ALUFun = ALUlez;
+                6'h07: ALUFun = ALUgtz;
+                6'h01: ALUFun = ALUgez;
+                6'h02: ALUFun = ALUadd;
+                6'h03: ALUFun = ALUadd;
+                default : ALUFun = ALUnop; // through
+            endcase
 endmodule

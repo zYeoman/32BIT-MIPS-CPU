@@ -21,7 +21,7 @@ module IF2ID(
             PCOut<=32'h8000_0000;
             InstructionOut<=0;
         end else if(flush) begin
-            PCOut<=32'h0;
+            PCOut <= {PCOut[31], {31{1'b0}}};
             InstructionOut<=32'h0;
         end else if(EN) begin
             PCOut<=PCIn;

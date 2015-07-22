@@ -187,20 +187,11 @@ bcd4:
     #nop
     #nop
     srl $t0,$t0,2
-reset:
-    addi $s1,$zero,0
-    addi $s2,$zero,256
-    j bcddisplay
+    j endbcd
     #数码管译码结束
     
 endbcd:
-    sll $s2,$s2,1
-    addi $s1,$s1,1
-bcddisplay:
-    #nop
     add $s4,$t0,$s3
-    #nop
-    #nop
     lw $s5,0($s4)
     #nop
     #nop
@@ -210,7 +201,13 @@ bcddisplay:
     #nop
     sw $s5,20($s0)
     #将译码结果显示
+    addi $t0,$zero,3
+    beq $s1,$t0,reset
+    sll $s2,$s2,1
     j exit
+reset:
+    addi $s1,$zero,0
+    addi $s2,$zero,256
 exit:
 # 重启中断
     lw $t5,8($s0)

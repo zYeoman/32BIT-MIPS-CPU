@@ -85,12 +85,14 @@ module CPU(
         ID2EX_Rs_Out,
         ID2EX_Shamt_Out;
     wire [5:0] ID2EX_ALUFun_Out; 
-    wire [2:0] ID2EX_PCSrc_Out; 
+    wire [2:0] ID2EX_PCSrc_Out; // no use ?
     wire [1:0] ID2EX_RegDst_Out, 
         ID2EX_MemtoReg_Out;
 
 
-    wire IRQ;               //input
+    wire IRQ,               //input
+        IRQ_;
+    reg IRQ__;
     wire ExtOp,LuOp,Sign;   //output
     wire [4:0] Rs;
     wire [4:0] Rd;
@@ -138,35 +140,9 @@ module CPU(
 
     wire [11:0] digi;
 
-    // IF阶段
-    // 非常不完善！！！还有中断什么的还没写都
-    // always @(*) begin
-    //     if (PCWrite) begin
-    //         if(Branch) begin
-    //             IFPC_In <= ConBA;
-    //         end else case (ID2EX_PCSrc_In)                //谁的PCSrc？
-    //             3'h0: IFPC_In <= IF2ID_PCIn+32'h4; //IF2ID_PCIn = PC
-    //             3'h1: IFPC_In <= Branch ? ConBA : IF2ID_PCIn+32'h4;
-    //             3'h2: IFPC_In <= {IFPC_Out[31:28], IF2ID_InstructionOut[25:0], 2'b0};
-    //             3'h3: IFPC_In <= ID2EX_DataBusA_In; // jr jalr $Ra
-    //             3'h4: IFPC_In <= 32'h8000_0004; // ILLOP
-    //             3'h5: IFPC_In <= 32'h8000_0008; // XADR
-    //             default: IFPC_In <= 32'h8000_0008;
-    //         endcase
-    //     end else
-    //         IFPC_In <= IFPC_In;
-    // end
-    // assign IFPC_In = PCWrite ? ( Branch ? ConBA : 
-    //     (ID2EX_PCSrc_In==3'h0) ? IF2ID_PCIn+32'h4 : 
-    //     (ID2EX_PCSrc_In==3'h1) ? (Branch ? ConBA : IF2ID_PCIn+32'h4) : 
-    //     (ID2EX_PCSrc_In==3'h2) ? {IFPC_Out[31:28], IF2ID_InstructionOut[25:0], 2'b0} : 
-    //     (ID2EX_PCSrc_In==3'h3) ? ID2EX_DataBusA_In : 
-    //     (ID2EX_PCSrc_In==3'h4) ? 32'h8000_0004 : 
-    //     (ID2EX_PCSrc_In==3'h5) ? 32'h8000_0008 : 
-    //     32'h8000_0008 ) : 
-    //     IFPC_In;
+    wire Branch_;
 
-    // assign IFPC_In = IFPC_Out + 32'h4;
+    assign Branch_ = ~IRQ_ & Branch;
 
     IF RegIF(
         .clk(clk), 
@@ -174,7 +150,7 @@ module CPU(
         .flush(IF_flush), 
         .PCSrc(ID2EX_PCSrc_In), 
         .PCWrite(PCWrite), 
-        .Branch(Branch), 
+        .Branch(Branch_), 
         .ConBA(ConBA), 
         .JT(IF2ID_InstructionOut[25:0]), 
         .DataBusA(ID2EX_DataBusA_In), 
@@ -192,10 +168,15 @@ module CPU(
     //本条指令
     assign IF2ID_PCIn = IFPC_Out; 
 
+    wire irq_IF2ID_flush;
+    wire irq_ID2EX_flush;
+    assign irq_ID2EX_flush = ~IRQ_ & ID2EX_flush;
+    assign irq_IF2ID_flush = ~IRQ_ & IF2ID_flush;
+
     IF2ID RegIF2ID(
         .clk(clk), 
         .rst(rst), 
-        .flush(IF2ID_flush), 
+        .flush(irq_IF2ID_flush), 
         .EN(IF2ID_EN), 
         .PCIn(IF2ID_PCIn), 
         .InstructionIn(IF2ID_InstructionIn), 
@@ -217,12 +198,16 @@ module CPU(
     
     assign ConBA = {ID2EX_Imm_Out[29:0],2'b0} + ID2EX_PC_In; // calc in EX
 
-    assign ID2EX_Rd_In = IF2ID_InstructionOut[15:11];
-    assign ID2EX_Rt_In = IF2ID_InstructionOut[20:16];
-    assign ID2EX_Rs_In = IF2ID_InstructionOut[25:21];
+    assign ID2EX_Rd_In = IRQ_ ? 5'h0 : IF2ID_InstructionOut[15:11];
+    assign ID2EX_Rt_In = IRQ_ ? 5'h0 : IF2ID_InstructionOut[20:16];
+    assign ID2EX_Rs_In = IRQ_ ? 5'h0 : IF2ID_InstructionOut[25:21];
+    
+    always @ (posedge clk)
+            IRQ__ = IRQ; //& ~IF2ID_flush
+    assign IRQ_ = ~IRQ__ & IRQ;
 
     Control control(
-        .irq(IRQ), .PC31(IF2ID_PCOut[31]), 
+        .irq(IRQ_), .PC31(IF2ID_PCOut[31]), 
         .OpCode(IF2ID_InstructionOut[31:26]), 
         .Funct(IF2ID_InstructionOut[5:0]), 
         .PCSrc(ID2EX_PCSrc_In), 
@@ -241,8 +226,8 @@ module CPU(
         .Branch(Branch), 
         .Jump(ID2EX_Jump_In), // Control to here
         .ID2EX_Rt(ID2EX_Rt_Out), 
-        .IF2ID_Rs(IF2ID_InstructionOut[25:21]), 
-        .IF2ID_Rt(IF2ID_InstructionOut[20:16]), 
+        .IF2ID_Rs(ID2EX_Rs_In), 
+        .IF2ID_Rt(ID2EX_Rt_In), 
         .PCWrite(PCWrite), 
         .IF2ID_flush(IF2ID_flush), 
         .IF2ID_write(IF2ID_EN), 
@@ -258,13 +243,20 @@ module CPU(
         .rdata1(rdata1), .rdata2(rdata2)
     );
 
-    assign ID2EX_DataBusA_In = ForwardC ? /*MEM2WB_rdata_Out*/wdata : rdata1;
-    assign ID2EX_DataBusB_In = ForwardD ? /*MEM2WB_rdata_Out*/wdata : rdata2;
+    assign ID2EX_DataBusA_In = (IRQ_ & ~IF2ID_PCOut[31]) ? 32'b0 : 
+        ForwardC ? wdata : 
+        rdata1;
+    // assign ID2EX_DataBusB_In = (IRQ_ & ~IF2ID_PCOut[31]) ? (IF2ID_flush ? IF2ID_PCIn : ID2EX_PC_In) : 
+    //     ForwardD ? wdata : 
+    //     rdata2;
+    assign ID2EX_DataBusB_In = (IRQ_ & ~IF2ID_PCOut[31]) ? (Branch ? ConBA : ID2EX_PC_In) : 
+        ForwardD ? wdata : 
+        rdata2;
 
     ID2EX RegID2EX(
         .clk(clk), 
         .rst(rst), 
-        .flush(ID2EX_flush), 
+        .flush(irq_ID2EX_flush), 
 
         .PC_In(ID2EX_PC_In), 
         .DataBusA_In(ID2EX_DataBusA_In), 
@@ -305,7 +297,7 @@ module CPU(
         .Rt_Out(ID2EX_Rt_Out), 
         .Rs_Out(ID2EX_Rs_Out), 
         .ALUFun_Out(ID2EX_ALUFun_Out), 
-        .PCSrc_Out(ID2EX_PCSrc_Out), 
+        .PCSrc_Out(ID2EX_PCSrc_Out), // no use ?
         .RegDst_Out(ID2EX_RegDst_Out), 
         .MemtoReg_Out(ID2EX_MemtoReg_Out) 
     );
@@ -399,6 +391,8 @@ module CPU(
             default : wdata = 32'b0;
         endcase
     end
+
+
 
     //MEM阶段
     DataMem datamem(

@@ -24,7 +24,7 @@ module IF(
         if (rst) begin
             PC_Out <= 0;
         end else if(flush)
-            PC_Out <= 0;
+            PC_Out <= {PC_Out[31], {31{1'b0}}};
         else if (PCWrite) begin
             if(Branch) begin
                 PC_Out <= ConBA;
