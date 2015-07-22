@@ -1,11 +1,8 @@
 /*
 Filename : gcd.c
-Description : C gcd C51_LIKE style
-Release : 7/22/2015
-Encoding : utf-8
+Description : C gcd
+Release : 7/18/2015
 */
-
-// 寄存器映射
 sfr TH 0x40000000
 sfr TL 0x40000004
 sfr TCON 0x40000008
@@ -24,7 +21,7 @@ void main(){
     TH = 0xFFFFF000;
     TL = 0xFFFFFFFF;
     $t7 = 0x10;
-    UART_CON = 0x00000000;
+    UART_CON = 0x00000000;//?可以么？
     while(UART_CON^3==0);
     $t1=UART_RXD&0x000000FF;
     while(UART_CON^3==0);
@@ -45,11 +42,7 @@ void time() interrupt 1 //Timer
 {
     TCON &= 0xFFFFFFF9;//关闭定时器中断
     //翻译
-    if($t7==0x100)BCD=DATA[$t1&0x0000000F]+$t7;
-    if($t7==0x200)BCD=DATA[$t1&0x000000F0]+$t7;
-    if($t7==0x400)BCD=DATA[$t2&0x0000000F]+$t7;
-    if($t7==0x800)BCD=DATA[$t2&0x000000F0]+$t7;
+    BCD=DATA[$t1&0x0000000F]+$t7;
     $t7 = $t7<<1;
-    if($t7==0x1000)$t7=0x10;
-    TCON |= 0x00000002;//打开定时器中断
+    if($t7==0)$t7=0x00010000;
 }

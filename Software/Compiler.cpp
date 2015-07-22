@@ -17,53 +17,39 @@ Release : 7/19/2015
 using namespace std;
 
 void showHelp(char const *argv[]){
-    cout<<"Usage: "<<argv[0]<<"[Options] [Source] [Output]"<<endl;
+    cout<<"Usage: "<<argv[0]<<" [Source] [Output]"<<endl;
     cout<<"Options:"<<endl;
     cout<<"    -h,--help     :  Show this help"<<endl;
     cout<<"    -v,--version  :  Show Version"<<endl;
     cout<<"    -f,--format   :  Output Format,Default is \"%08X %08X\""<<endl;
 }
 
-
-// void split(string & s, string & delim, vector< string > &ret)
-// split string by delim, save result in ret
-// all delim will discard
-// wont change s,delim; change ret
-void split(string &s, string& delim, vector< string > &ret){
-    int last = 0;
-    int index = s.find_first_of(delim, last);
-    while (index != string::npos){
-        ret.push_back(s.substr(last, index - last));
-        last = index + 1;
-        index = s.find_first_of(delim, last);
-        while (index == last){
-            last++;
-            index = s.find_first_of(delim, last);
-        }
-    }
-    if(s.substr(last)!="")
-       ret.push_back(s.substr(last));      //discard the last ""
-}
-
-// string& trim(string &)
-// delete the space at the beginning and ending of the string
-// will change s
-// in fact you can use just use split(s, " ", ret);sum(ret); instead
 string& trim(string &s){
 	if (s.empty()){
 		return s;
 	}
 
-	s.erase(0, s.find_first_not_of(" "));  //delete beginning space
-	s.erase(s.find_last_not_of(" ") + 1);  //delete ending space
+	s.erase(0, s.find_first_not_of(" "));
+	s.erase(s.find_last_not_of(" ") + 1);
 	return s;
 }
 
+void split(string &s, string& delim, vector< string > *ret){
+	int last = 0;
+	int index = s.find_first_of(delim, last);
+	while (index != string::npos){
+		ret->push_back(s.substr(last, index - last));
+		last = index + 1;
+		index = s.find_first_of(delim, last);
+		while (index == last){
+			last++;
+			index = s.find_first_of(delim, last);
+		}
+	}
+    if(s.substr(last)!="")
+	   ret->push_back(s.substr(last));
+}
 
-// string& cut(string &s, char flag = ':')
-// delete all in front of flag
-// will change s
-// in fact you can use split(s, ":", ret);s=ret[1]; instead
 string& cut(string &s,char flag = ':'){
 	if (s.empty()){
 		return s;
@@ -73,21 +59,12 @@ string& cut(string &s,char flag = ':'){
 	return s;
 }
 
-
-// string& comment(string &s)
-// delete all after #, and #
-// will change s
-// in fact you can use split(s, "#", ret);s=ret[0]; instead
 string& comment(string &s){
 	if (s.find_first_of('#')!=s.npos)
 		s.erase(s.begin() + s.find_first_of('#'), s.end());
     return s;
 }
 
-
-// char char2int(char)
-// convert char to int
-// support hexadecimal 
 char char2int(char p){
     switch (p){
         case '0':return 0;
@@ -116,10 +93,6 @@ char char2int(char p){
     }
 }
 
-
-// int str2int(string &s)
-// convert registers to its No. and instructions to number and  hexadecimal or decimal string to int
-// wont change s
 int str2int(string &s){
 	s = trim(s);
 	if (s[0] == '$'){
@@ -137,7 +110,6 @@ int str2int(string &s){
 		if (s == "$ra")return 31;
 		throw s;
 	}
-
 	if (s == "add")return 0;	   //R,20
 	if (s == "sub")return 1;	   //R,22
     if (s == "and")return 2;       //R,24
@@ -156,7 +128,6 @@ int str2int(string &s){
 	if (s == "jal")return 30;      //J,3
 	if (s == "jr")return 31;       //R,08
     if (s == "nop")return 32;
-
     if (s[0] == '0'){
         int res = 0;
         if(s[1] == 'x'||s[1] == 'X'){
@@ -194,11 +165,6 @@ int str2int(string &s){
 	return 33;
 }
 
-
-
-// int find(vector<string>&content,string target,unsigned int start=0)
-// find the jump target from content
-// default from the beginning of the content
 int find(vector<string>&content,string target,unsigned int start=0){
     int lineNum = 0;
     for (unsigned int i = start; i < content.size(); i++){
@@ -227,27 +193,22 @@ int find(vector<string>&content,string target,unsigned int start=0){
     return 0;
 }
 
-
-// trans asm string to number string
-// output: ofstream, content: the asm data, index: now , line: valid line, fmt: output format
 int trans(ofstream &output, vector<string>&content, int index, int line, string fmt = (string)"%08X %08X"){
 	vector<string> ret;
 	if (content[index]==""){
 		return 1;
-	}//Discard ""
+	}
 	else{
 		string thisLine = content[index];
-		// process thisLine
-        comment(thisLine);
-        cut(thisLine);
+		cut(thisLine);
+		comment(thisLine);
 		trim(thisLine);
-
 		if (thisLine == ""){
 			return 2;
 		}
 		int instruct;
 		int opt;
-		split(thisLine, (string)" ,()", ret);
+		split(thisLine, (string)" ,()", &ret);
 		opt = str2int(ret[0]);
 		int opn = (unsigned int)opt < 29 ? 4 : 2;
         opn = (opt == 11 ? 3 : opn);
@@ -328,8 +289,6 @@ int trans(ofstream &output, vector<string>&content, int index, int line, string 
 	return 0;
 }
 
-
-// main: just deal with the argv
 int main(int argc, char const *argv[]){
     if (argc==1){
         showHelp(argv);
