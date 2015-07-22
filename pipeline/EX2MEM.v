@@ -41,7 +41,7 @@ module EX2MEM(
             AddrC_Out <= 0;
             MemtoReg_Out <= 0;
             DataBusB_Out <= 0;
-        end else 
+        end else begin
             RegWrite_Out <= RegWrite_In;
             MemWrite_Out <= MemWrite_In;
             MemRead_Out <= MemRead_In;
@@ -50,6 +50,7 @@ module EX2MEM(
             AddrC_Out <= AddrC_In;
             MemtoReg_Out <= MemtoReg_In;
             DataBusB_Out <= DataBusB_In;
+        end
     end
 
 endmodule

@@ -16,10 +16,13 @@ module IF2ID(
 );
     
     always @(posedge clk or posedge rst) begin
-        if (rst|flush) begin
+        if (rst) begin
             // reset
             PCOut<=32'h8000_0000;
             InstructionOut<=0;
+        end else if(flush) begin
+            PCOut<=32'h0;
+            InstructionOut<=32'h0;
         end else if(EN) begin
             PCOut<=PCIn;
             InstructionOut<=InstructionIn;

@@ -4,7 +4,8 @@ module Control (
     output [2:0] PCSrc,  
     output [1:0] RegDst, MemtoReg, //nextPC,
     output RegWrite, ALUSrc1, ALUSrc2, Branch,
-        MemWrite, MemRead, ExtOp, LuOp, Sign,
+        MemWrite, MemRead, ExtOp, LuOp, Sign, 
+    output reg Jump, 
     //output [3:0] ALUOp, 
     output reg [5:0] ALUFun
 );
@@ -41,7 +42,14 @@ module Control (
     //     (OpCode == 6'h02 || OpCode == 6'h03) ? 2'h2 : // J
     //     (OpCode == 6'h01 || (OpCode > 6'h03 && OpCode < 6'h08)) ? 2'h1 : // branch
     //     2'h0 ; 
-    assign Branch = (OpCode < 6'h08) ? 1'b1 : 1'b0;
+    assign Branch = (OpCode <= 6'h07 && OpCode >= 6'h4)|(OpCode == 6'h1)|(OpCode == 6'h00 && (Funct == 6'h8 || Funct == 6'h9)) ? 1'b1 : 1'b0;
+    always @ (*)
+        case (OpCode)
+            6'h2: Jump = 1'h1;
+            6'h3: Jump = 1'h1;
+            6'h0: Jump = (Funct == 6'h8 || Funct == 6'h9) ? 1'h1 : 1'h0;
+            default: Jump = 1'h0;
+        endcase
     assign RegWrite = (~PC31&irq)|(~PC31&EXC) ? 1'b1 : 
         (OpCode == 6'h01 || OpCode == 6'h02 || OpCode == 6'h04 || OpCode == 6'h05 || OpCode == 6'h06 || OpCode == 6'h07 || OpCode == 6'h2b || (OpCode==6'h00 && Funct==6'h08)) ? 1'b0 : 1'b1;
     assign RegDst = (~PC31&irq)|(~PC31&EXC) ? 2'h3 : 
