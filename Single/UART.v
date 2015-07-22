@@ -1,15 +1,40 @@
-module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
+/*
+Filename : UART.v
+Compiler : Quartus II
+Description : UART TX Send Data and RX Receive Data
+Modules : UART_TX...input clk;              //ç³»ç»Ÿæ—¶é’Ÿ
+                    input rst;
+                    input [7:0]DATA;        //å‘é€æ•°æ®
+                    input EN;               //ä½¿èƒ½ä¿¡å·
+                    output reg TX;          //å‘é€æ•°æ®
+                    output reg STATUS;      //TXçŠ¶æ€ï¼Œé«˜æ—¶ç©ºé—²
+                    output reg END;         //TXå‘é€å®Œæ¯•ï¼Œæœ‰ä¸€ä¸ªé«˜ç”µå¹³è„‰å†²
+                    //å‘é€TXæ—¶å¯åŠ¨æ³¢ç‰¹ç‡å‘ç”Ÿå™¨
+          UART_RX...input clk;              //ç³»ç»Ÿæ—¶é’Ÿ
+                    input RX;               //æ¥å—æ•°æ®
+                    input rst;
+                    output reg [7:0]DATA;   //8ä½æ•°æ®å­˜å‚¨
+                    output reg STATUS;      //RXæ¥å—å®Œæ¯•ï¼Œæœ‰ä¸€ä¸ªé«˜ç”µå¹³è„‰å†²
+          BaudGen...    input clk;          //ç³»ç»Ÿæ—¶é’Ÿ,27MHz
+                        input start;        //å¼€å§‹ä¿¡å·
+                        input rst;          
+                        output reg clk_9600;//9600Hzè„‰å†²
+            
+Attention : clk should be 27MHz
+Author : Yeoman Zhuang
+Release : *
+*/
 
-    input clk;              //ÏµÍ³Ê±ÖÓ
-    input rst;
-    input [7:0]DATA;        //·¢ËÍÊı¾İ
-    input EN;               //Ê¹ÄÜĞÅºÅ
-    output reg TX;          //·¢ËÍÊı¾İ
-    output reg STATUS;      //TX×´Ì¬£¬¸ßÊ±¿ÕÏĞ
-    output reg END;         //TX·¢ËÍÍê±Ï£¬ÓĞÒ»¸ö¸ßµçÆ½Âö³å
-    //·¢ËÍTXÊ±Æô¶¯²¨ÌØÂÊ·¢ÉúÆ÷
 
-    wire clk_9600;         //·¢ËÍÊ±ÖÓ
+module UART_TX(
+    input clk, rst, EN, 
+    input [7:0]DATA, 
+    output reg TX,STATUS,END
+);
+
+    
+
+    wire clk_9600;         //å‘é€æ—¶é’Ÿ
 
     BaudGen TXbg(.clk(clk),
         .clk_9600(clk_9600),
@@ -32,7 +57,7 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
             // reset
             STATUS<=1;
             TX_DATA<=8'h00;
-        end else if (EN) begin   //¼ì²âµ½ENĞÅºÅ
+        end else if (EN) begin   //æ£€æµ‹åˆ°ENä¿¡å·
             TX_DATA<=DATA;
             STATUS<=0;
         end else if (TX_num==4'hA) begin
@@ -40,7 +65,7 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
         end
     end
 
-    always @(posedge clk or posedge rst) begin//·¢ËÍÊı¾İ
+    always @(posedge clk or posedge rst) begin//å‘é€æ•°æ®
         if (rst) begin
             // reset
             TX<=1'b1;
@@ -50,7 +75,7 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
         else if (clk_9600&&(~STATUS)) begin
             TX_num<=TX_num+4'h1;
             case(TX_num)
-                4'h0: TX<=1'b0;         //ÆğÊ¼Î»
+                4'h0: TX<=1'b0;         //èµ·å§‹ä½
                 4'h1: TX<=TX_DATA[0];
                 4'h2: TX<=TX_DATA[1];
                 4'h3: TX<=TX_DATA[2];
@@ -74,17 +99,16 @@ module UART_TX(clk,TX,DATA,EN,STATUS,END,rst);
     end
 endmodule
 
-module UART_RX(clk,RX,DATA,STATUS,rst);
-    input clk;              //ÏµÍ³Ê±ÖÓ
-    input RX;               //½ÓÊÜÊı¾İ
-    input rst;
-    output reg [7:0]DATA;   //8Î»Êı¾İ´æ´¢
-    output reg STATUS;      //RX×´Ì¬£¬ÊÕµ½Ò»¸ö×Ö½Úºó¾Í·¢ÉúÒ»¸ö¸ßµçÆ½Âö³å
+module UART_RX(
+    input clk, rst, RX, 
+    output reg [7:0]DATA, 
+    output reg STATUS 
+);
 
-    wire clk_9600;          //ÖĞ¼ä²ÉÑùµã
-    reg start;              //½ÓÊÜRXÊ±Æô¶¯²¨ÌØÂÊ·¢ÉúÆ÷
+    wire clk_9600;          //ä¸­é—´é‡‡æ ·ç‚¹
+    reg start;              //æ¥å—RXæ—¶å¯åŠ¨æ³¢ç‰¹ç‡å‘ç”Ÿå™¨
     reg [7:0]temp_DATA;
-    reg [3:0]RX_num;        //½ÓÊÜ×Ö½ÚÊı
+    reg [3:0]RX_num;        //æ¥å—å­—èŠ‚æ•°
 
     BaudGen RXbg(.clk(clk),
         .clk_9600(clk_9600),
@@ -97,10 +121,10 @@ module UART_RX(clk,RX,DATA,STATUS,rst);
             start<=1'b0;
         end
         else if (~RX) begin
-            start<=1'b1;    //¿ªÆô²¨ÌØÂÊ·¢ÉúÆ÷//¿ªÊ¼½ÓÊÜ
+            start<=1'b1;    //å¼€å¯æ³¢ç‰¹ç‡å‘ç”Ÿå™¨//å¼€å§‹æ¥å—
         end
         else if (RX_num==4'hA)begin
-            start<=1'b0;    //¹Ø±Õ²¨ÌØÂÊ·¢ÉúÆ÷
+            start<=1'b0;    //å…³é—­æ³¢ç‰¹ç‡å‘ç”Ÿå™¨
         end
     end
 
@@ -135,10 +159,13 @@ module UART_RX(clk,RX,DATA,STATUS,rst);
     end
 endmodule
 
-module BaudGen(clk,clk_9600,start,rst);
+module BaudGen(
+    input clk, start, rst, 
+    output reg clk_9600
+);
     // clk should be 27MHz
-    // start, rst, ¸ßµçÆ½ÓĞĞ§
-    // ²úÉú9600HzÂö³å 
+    // start, rst, é«˜ç”µå¹³æœ‰æ•ˆ
+    // äº§ç”Ÿ9600Hzè„‰å†² 
     input rst;
     input start;
     input clk;
