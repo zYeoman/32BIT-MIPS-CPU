@@ -32,6 +32,8 @@ endmodule
 
 // no IF2ID_Rs & IF2ID_Rt
 // directly connect from `instruction` outside this module
+//为产生气泡，对寄存器进行清除，产生气泡可以延后时钟周期方便转发
+//jump为第二阶段，branch为第三阶段，清除寄存器延后时钟周期
 module Hazard(
     input ID2EX_MemRead, 
         Branch, 
