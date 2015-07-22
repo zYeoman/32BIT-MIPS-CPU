@@ -1,3 +1,8 @@
+# Filename : gcd.asm
+# Description : MIPS code
+# Release : 7/22/2015
+# Encoding : urf-8
+
 # a = $t1,b = $t2，result = $t1
 # $s0=外设地址指针
 # $s1=数码管译码位置选择
@@ -11,16 +16,21 @@
 # $t8=UART_RXD
 # $t9=BCD
 
+# 这是前三行，第一行是正式执行，第二行是中断，第三行是异常(进入异常后将会无限循环)
 firstLine:
     j init
     j INTERUPT
 Error:
     j Error 
 
+# 正常程序开始
 init:
+    #将之前PC的最高位置零，只有jr,jalr能改最高位
     addi $t0,$zero,20
     jr $t0
+    # 外设地址指针
     lui $s0,0x4000
+    # 设置计时器TH,TL以及TCON
     addi $t3,$zero,-4096
     sw $zero,8($s0) #TCON = 0
     sw $t3,0($s0)   #TH=0xFFFFF000
@@ -65,12 +75,14 @@ init:
     addi $t0,$zero,0x0E
     sw $t0,60($s3)
 
+# 读取第一个UART数据(8bits)
 get1:
     lw $t6,32($s0)
     andi $t6,$t6,8
     beq $t6,$zero,get1
     lw $t1,28($s0)
 
+# 读取第二个UART数据(8bits)
 get2:
     lw $t6,32($s0)
     andi $t6,$t6,8
@@ -79,15 +91,21 @@ get2:
 
 filter:
     addi $t5,$zero,3
+    # UART只取8bits数据
     andi $t1,$t1,255#0xFF
     andi $t2,$t2,255#0xFF
+    # 存下数据用于数码管显示，以下计算中只改变$t1和$t2
     add $a0,$zero,$t1
     add $a1,$zero,$t2
+    # 开TCON中断
     sw $t5,8($s0)
+
+
+# 开始最大公约数主函数
 main:
-    beq $t1,$t2,end
-    slt $t6,$t1,$t2
-    beq $t6,$zero,high
+    beq $t1,$t2,end         # 当两个数相等时停止
+    slt $t6,$t1,$t2         # 判断大小，大数等于大数减小数，循环
+    beq $t6,$zero,high      # 更相减损法
     j low
 high:
     sub $t1,$t1,$t2
@@ -96,14 +114,16 @@ low:
     sub $t2,$t2,$t1
     j main
 end:
-    sw $t1,24($s0)
+    sw $t1,24($s0)         # 结束时UART发送 
 TX:
-    lw $t6,32($s0)
+    lw $t6,32($s0)         # 读取UART状态
     andi $t6,$t6,4
-    beq $t6,$zero,TX
+    beq $t6,$zero,TX       # 未发送完成时循环
 result:
-    sw $t1,12($s0)
-    j get1
+    sw $t1,12($s0)         # 发送完毕后又加上LED 显示
+    j get1                 # 等待下一次运算
+
+
 #中断处理部分
 INTERUPT:
     lw $t5,8($s0)
@@ -111,6 +131,7 @@ INTERUPT:
     and $t5,$t5,$t8 
     sw $t5,8($s0)       #关闭中断
     #在这里译码数码管显示
+    
     beq $s1,$zero,bcd1
     addi $s6,$s1,-1
     beq $s6,$zero,bcd2
@@ -121,25 +142,22 @@ INTERUPT:
 bcd1:
     andi $t0,$a0,0xF
     sll $t0,$t0,2
-    add $s4,$t0,$s3
     j endbcd
 bcd2:
     andi $t0,$a0,0xF0
     srl $t0,$t0,2
-    add $s4,$t0,$s3
     j endbcd
 bcd3:
     andi $t0,$a1,0xF
     sll $t0,$t0,2
-    add $s4,$t0,$s3
     j endbcd
 bcd4:
     andi $t0,$a1,0xF0
     srl $t0,$t0,2
-    add $s4,$t0,$s3
     j endbcd
     #数码管译码结束
 endbcd:
+    add $s4,$t0,$s3
     lw $s5,0($s4)
     add $s5,$s5,$s2
     sw $s5,20($s0)
