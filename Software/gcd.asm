@@ -162,12 +162,8 @@ endbcd:
     add $s5,$s5,$s2
     sw $s5,20($s0)
     #将译码结果显示
-<<<<<<< HEAD
-    addi $t0,$zero,3
-=======
     addi $s1,$s1,1
     addi $t0,$zero,4
->>>>>>> origin/master
     beq $s1,$t0,reset
     sll $s2,$s2,1
     j exit

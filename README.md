@@ -3,8 +3,6 @@
 ## ALU
 ## 单周期
 ## 多周期
-TodoList
-all 
 
 ## 翻译器
 
