@@ -331,6 +331,8 @@ int trans(ofstream &output, vector<string>&content, int index, int line, string 
 
 // main: just deal with the argv
 int main(int argc, char const *argv[]){
+    short life;
+    //life is short, why I use cpp?
     if (argc==1){
         showHelp(argv);
     }

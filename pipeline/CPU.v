@@ -1,12 +1,15 @@
-// module div(input clk_div,output reg clk);
+/*
+Filename : CPU.v
+Compiler : Quartus II
+Description : ALU ---- Arithmetic and Logic Unit
+INPUT : input [31:0]in1, in2, 
+        input [5:0]ALUFun, 
+        input sign,
+OUTPUT : output reg [31:0] out 
+Author : Zhang Chuanyi
+Release : 2015/7/20
+*/
 
-// initial clk = 1'b0;
-
-// always @ (posedge clk_div) begin
-//     clk <= ~clk;
-// end
-
-// endmodule
 
 module CPU(
     input clk_div, rst_n,

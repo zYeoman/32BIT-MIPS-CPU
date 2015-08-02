@@ -1,3 +1,16 @@
+/*
+Filename : ALU.v
+Compiler : Quartus II
+Description : ALU ---- Arithmetic and Logic Unit
+INPUT : input [31:0]in1, in2, 
+        input [5:0]ALUFun, 
+        input sign,
+OUTPUT : output reg [31:0] out 
+Author : Zhang Chuanyi
+Release : 2015/7/20
+*/
+
+
 module ALU (
     input [31:0] in1, in2, 
     input [5:0] ALUFun,
@@ -31,9 +44,9 @@ module ALU (
             3'b001: out11 = zero ? 32'b1 : 32'b0;
             3'b000: out11 = zero ? 32'b0 : 32'b1;
             3'b010: out11 = nega ? 32'b1 : 32'b0;
-            3'b110: out11 = (nega|zero) ? 32'b1 : 32'b0; // blez
-            3'b100: out11 = (~in1[31]) ? 32'b1 : 32'b0; // bgez
-            3'b111: out11 = (~in1[31]&~zero) ? 32'b1 : 32'b0; // bgtz
+            3'b110: out11 = (nega|zero) ? 32'b1 : 32'b0;        // blez
+            3'b100: out11 = (~in1[31]) ? 32'b1 : 32'b0;         // bgez
+            3'b111: out11 = (~in1[31]&~zero) ? 32'b1 : 32'b0;   // bgtz
             default : out11 = 32'b0;
         endcase
         case (ALUFun[3:0])
