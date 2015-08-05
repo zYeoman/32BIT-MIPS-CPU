@@ -1,0 +1,1 @@
+{"name":"32bit-mips-cpu","tagline":"Big Homework of EE","body":"### 32bit-mips-cpu\r\n\r\n使用`Verilog`实现的32位MIPS指令集CPU，包括单周期CPU和流水线CPU两部分，目前已经实现UART串口收发和计时器中断。 \r\n","google":"","note":"Don't delete this file! It's used internally to help with page regeneration."}
