@@ -509,7 +509,7 @@ UART的问题主要是收发不正常。最开始是收到了操作数，也可�
         * UART.v 异步串口收发
 
 ### 综合情况
-
+| | |
 | :--------------------- | :----------------------: |
 | **Flow Status Successful** | Thu Jul 22 23:27:12 2015 |
 | **Quartus II Version** | 9.0 Build 132 02/25/2009 SJ Full Version |
@@ -535,5 +535,5 @@ UART的问题主要是收发不正常。最开始是收到了操作数，也可�
 | Worst-case tsu | N/A | None | 5.916 ns |
 | Worst-case tco | N/A | None | 11.289 ns|
 | Worst-case th  | N/A | None | -2.249 ns|
-| Clock Setup: 'clk' | 6.034 ns | 27.00 MHz | 32.25 MHz |
+| Clock Setup: 'clk' | 6.034 ns | 27.00 MHz | 32.25 MHz (fmax) |
 
