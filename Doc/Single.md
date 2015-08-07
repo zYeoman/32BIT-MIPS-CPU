@@ -12,15 +12,15 @@
 
 无论何时都执行加法，得到的溢出`V`，负号`N`和零`Z`信号输入比较模块。比较模块根据操作数、是否是符号运算和上述信号判断结果。
 
-![ALU框图\label{图}](img/alu.png)
+![ALU框图](img/alu.png)
 
-加法器模块若是加法就将两操作数相加，若是减法则与第二个操作数的补码相加。得到的结果输出为`out00`，`Z V N`送入比较子模块。
+加法器模块若是加法就将两操作数相加，若是减法则与第二个操作数的补码相加。得到的结果输出为`out00`，`Z` `V` `N`送入比较子模块。
 
 - 结果是零，那么`Z`自然是零
 - 如果是无符号运算，则`N`永远不会是负数，有符号时若最高位是`1`则为负数
 - 如果是无符号加法，则当计算结果比较大输入小时发生溢出，减法则是结果比较小输入大时溢出；如果是有符号运算，当跨越数轮正负分界线时发生溢出，也就是计算前后最高位变化时溢出。这里因为使用了本身自带的加法，让软件综合加法器加快速度，所以无法使用进位不同的办法来检测溢出。
 
-比较模块根据`N, V, Z`判断真假输出。语句比较浅显，需要指出的是`bgez`和`bgtz`本身的`in2`是不能用的，因为`$1, $11`寄存器中的数值并不能作为0或者1用于计算，结果通常是错的，所以仅使用了第一个操作数。这里并不是很清楚Hennesy教授他们在设计MIPS架构时为何要使用这样的奇怪数值。
+比较模块根据`N`, `V`, `Z`判断真假输出。语句比较浅显，需要指出的是`bgez`和`bgtz`本身的`in2`是不能用的，因为`$1`, `$11`寄存器中的数值并不能作为0或者1用于计算，结果通常是错的，所以仅使用了第一个操作数。这里并不是很清楚Hennesy教授他们在设计MIPS架构时为何要使用这样的奇怪数值。
 
 逻辑模块对输入进行与或非等操作。移位模块使用了5个级联的移位器，模仿桶形移位器结构。
 
@@ -35,20 +35,18 @@ always @ (*) begin
             out00 = in1 + in2;
             zero = (out00 == 1'b0)? 1'b1 : 1'b0;
             overflow = sign ? (out00[31]^in1[31])&(out00[31]^in2[31]) : 
-                    out00 < in1 || out00 < in2;
+                out00 < in1 || out00 < in2;
             nega = out00[31];
         end
         1'b1: begin
             out00 = in1 + ~in2 + 32'b1;
             zero = (out00 == 1'b0)? 1'b1 : 1'b0;
             overflow = sign ? (out00[31]^in1[31])&(out00[31]^in2[31]) : 
-                    out00 > in1 || out00 > in2;
+                out00 > in1 || out00 > in2;
             nega = out00[31];
         end
         default : out00 = 32'b0;
     endcase
-```
-``` {.verilog .numberLines}
     case (ALUFun[3:1])
         3'b001: out11 = zero ? 32'b1 : 32'b0;
         3'b000: out11 = zero ? 32'b0 : 32'b1;
@@ -58,8 +56,6 @@ always @ (*) begin
         3'b111: out11 = (~in1[31]&~zero) ? 32'b1 : 32'b0; // bgtz
         default : out11 = 32'b0;
     endcase
-```
-``` {.verilog .numberLines}
     case (ALUFun[3:0])
         4'b1000: out01 = in1 & in2;
         4'b1110: out01 = in1 | in2;
@@ -68,8 +64,6 @@ always @ (*) begin
         4'b1010: out01 = in1;
         default : out01 = 32'b0;
     endcase
-```
-``` {.verilog .numberLines}
     case (ALUFun[1:0])
         2'b00: begin                            // sll
                     out10 = in2;
@@ -97,8 +91,6 @@ always @ (*) begin
                 end
         default : out10 = 32'b0;
     endcase
-```
-``` {.verilog .numberLines}
     case(ALUFun[5:4])
         2'b00: out = out00;
         2'b01: out = out01;
@@ -106,14 +98,19 @@ always @ (*) begin
         2'b11: out = out11;
         default: out<= 32'b0;
     endcase
+end
 ```
 ###测试结果
 
-![ALU测试结果\label{图}](img/alu_tb.jpg)
+![ALU测试结果](img/alu_tb.jpg)
 
-###小结
+###调试情况及体会
 
 制作ALU部分较为简单，只是将各种运算按照标准搬上去就可以用了。在涉及到溢出的部分我又回去看了一下书，最后才想到的这种实现方法，而之所以之前一直使用的一种不正确的溢出检测并没有出现问题，是因为我们并没有实现溢出异常检测，也没有用到该信号。
+
+###代码清单
+
+- ALU.v
 
 
 ##单周期处理器 (张传奕)##
@@ -272,7 +269,7 @@ assign Sign = ExtOp;
 #####测试结果
 测试平台按照上表顺序测试各指令输出，结果均正常。
 
-![控制信号结果\label{图}](img/control_tb.jpg)
+![控制信号结果](img/control_tb.jpg)
 
 ####数据存储器&外设`DataMem.v`
 
@@ -487,7 +484,7 @@ digitube_scan digitube(
 );
 ```
 
-####调试情况及体会
+###调试情况及体会
 调试时分为三部分：
 
 1. 通过拨码开关输入并只执行求最大公约数程序，通过LED输出。仿真正常后烧录执行调试。不使用UART及中断
@@ -501,4 +498,42 @@ digitube_scan digitube(
 UART的问题主要是收发不正常。最开始是收到了操作数，也可以计算，但却不能通过UART输出。经过检查发现是之前没有沟通好，导致我以为发送模块在发送完成后也是输出一个脉宽为一个时钟周期的脉冲，没能与`DataMem`配合好。后来在UART模块内加了一个`END`信号，该信号根据发送情况决定，即上述脉冲。修改后UART正常，但是会发两遍，这里的问题是结束信号产生的过晚了。解决办法是将结束信号提前到第八个位发送时。修改后UART均正常。
 
 在中断处理时一开始遇到了一些问题，显示混乱不是正常的数字。后发现是汇编有错误，汇编报告调试部分有说明。修改后最终所有部分均工作正常。
+
+### 代码清单
+- CPU.v 顶层模块
+    + Instruction.v 指令存储器
+    + Register.v 寄存器
+    + Control.v 控制模块
+    + ALU.v 算术逻辑单元
+    + DataMem.v 数据存储器
+        * UART.v 异步串口收发
+
+### 综合情况
+
+| :--------------------- | :----------------------: |
+| **Flow Status Successful** | Thu Jul 22 23:27:12 2015 |
+| **Quartus II Version** | 9.0 Build 132 02/25/2009 SJ Full Version |
+| **Revision Name** |  CPU |
+| **Top-level Entity Name** |  CPU |
+| **Family** | Cyclone II |
+| **Device** | EP2C35F672C6 |
+| **Timing Models** |  Final |
+| **Met timing requirements** |  Yes |
+| **Total logic elements** |   14,964 / 33,216 ( 45 % ) |
+| **Total combinational functions** |  8,905 / 33,216 ( 27 % ) |
+| **Dedicated logic registers** |  9,393 / 33,216 ( 28 % ) |
+| **Total registers** |  9393 |
+| **Total pins** | 48 / 475 ( 10 % ) |
+| **Total virtual pins** | 0 |
+| **Total memory bits** |  0 / 483,840 ( 0 % ) |
+| **Embedded Multiplier 9-bit elements** | 0 / 70 ( 0 % ) |
+| **Total PLLs** | 0 / 4 ( 0 % ) |
+
+
+| **Type** | **Slack** | **Required Time** | **Actual Time** |
+|:----:|:-----:|:-------------:|:-----------:|
+| Worst-case tsu | N/A | None | 5.916 ns |
+| Worst-case tco | N/A | None | 11.289 ns|
+| Worst-case th  | N/A | None | -2.249 ns|
+| Clock Setup: 'clk' | 6.034 ns | 27.00 MHz | 32.25 MHz |
 
