@@ -20,7 +20,7 @@
     - 命令行命令包括:帮助`-h,--help`，版本号`-v,--version`，设置输出格式`-f,--format`，以及输入输出文件名。
     - 具体代码如下：
 
-    ```cpp
+    ``` {.cpp .numberLines}
     // main: just deal with the argv
     int main(int argc, char const *argv[]){
         short life;
@@ -83,7 +83,7 @@
     - 在此函数中进行的是把每一行的汇编代码转换成32位操作数，目前并不支持一行内有多行语句。注意到在`c++`中，`int`的大小就是32位，这样可以直接将操作数存入一个`int`类型的数`Instruction`内。在这个函数中的主要操作是对一行汇编代码进行预处理以后判断是否有错误，并翻译成32位操作数，与32位的PC值共同按照`fmt`的输出格式返回。
     - 具体代码如下：
 
-    ```cpp
+    ```{.cpp .numberLines}
     // trans asm string to number string
     // output: ofstream, content: the asm data, index: now , line: valid line, fmt: output format
     int trans(ofstream &output, vector<string>&content, int index, int line, string fmt = (string)"%08X %08X"){
@@ -198,7 +198,7 @@
 因为汇编代码不是很长，因此就在这里直接全部贴在下面了。
 [gcd.asm](./gcd.asm)
 
-```mips
+```{.mips .numberLines}
 # Filename : gcd.asm
 # Description : MIPS code
 # Release : 7/22/2015
@@ -382,8 +382,13 @@ exit:
 
 直接在MARS中仿真的话，需要修改一下MARS的设置，同时要把UART读取去掉改为直接赋值。最终结果是正确的，在放到单周期和多周期的处理器中运行的话仿真结果和实际验证结果也是正确的。
 
-### 调试情况及体会
+### 调试情况
 
 因为这个汇编的代码也是比较简单的，因此最终也没有花多久时间来调试，主要调试的部分其实是扫描显示的时候使能位设置错了，应该是第`9~12`位，一开始应该是`256`，结果设置成`16`了。最终还是通过`ModelSim`仿真才发现的问题。
 
 在写汇编代码的时候，一开始只写了求最大公约数的代码，至于中断处理以及UART等等都是没有什么头绪的。后来在和同组的张传奕同学交流以后，彻底搞明白了中断处理的流程，同时先写了一段仿照C51的C代码，再将这一段C代码翻译成汇编，这样子进度就一下子快了起来。其中那段C51_LIKE的代码为[gcd.c](./gcd.c)
+
+### 思想体会
+* 分配好任务后要多沟通，不能自己一个人单干；要及时沟通进度和互相之间的接口。
+* 写汇编之前可以先写一个C的代码然后人工翻译成汇编，这样更容易写也更容易理解工作的流程。
+* 翻译器代码可以先只实现几个功能，采用迭代式开发的方式。

@@ -22,7 +22,7 @@ UART模块分成UART发送、UART接收和波特率发生模块三部分组成�
 
 发送模块：
 
-```verilog
+``` {.verilog .numberLines}
 wire clk_9600;         //发送时钟
 BaudGen TXbg(.clk(clk),
     .clk_9600(clk_9600),
@@ -86,7 +86,7 @@ end
 
 接受模块：
 
-```verilog
+``` {.verilog .numberLines}
 wire clk_9600;          //中间采样点
 reg start;              //接受RX时启动波特率发生器
 reg [7:0]temp_DATA;
@@ -141,7 +141,7 @@ end
 
 波特率发生模块产生9600Hz高电平脉冲
 
-```verilog
+``` {.verilog .numberLines}
 // clk should be 27MHz
 // start, rst, 高电平有效
 // 产生9600Hz脉冲 
